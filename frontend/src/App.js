@@ -101,9 +101,15 @@ const AuthPage = ({ onLogin }) => {
 
       const response = await axios.post(`${API}${endpoint}`, payload);
       
-      onLogin(response.data.access_token, response.data.organization);
+      if (response.data && response.data.access_token && response.data.organization) {
+        onLogin(response.data.access_token, response.data.organization);
+      } else {
+        throw new Error('Invalid response from server');
+      }
     } catch (error) {
-      setError(error.response?.data?.detail || 'Authentication failed');
+      console.error('Authentication error:', error);
+      const errorMessage = error.response?.data?.detail || error.message || 'Authentication failed';
+      setError(typeof errorMessage === 'string' ? errorMessage : 'Authentication failed');
     } finally {
       setLoading(false);
     }
