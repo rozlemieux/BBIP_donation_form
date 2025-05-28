@@ -257,27 +257,37 @@ async def register_organization(org_data: OrganizationCreate):
 @api_router.post("/organizations/login")
 async def login_organization(login_data: AdminLogin):
     """Login for organization admin"""
-    import hashlib
-    password_hash = hashlib.sha256(login_data.password.encode()).hexdigest()
-    
-    org_data = await db.organizations.find_one({
-        "admin_email": login_data.email,
-        "admin_password_hash": password_hash
-    })
-    
-    if not org_data:
-        raise HTTPException(401, "Invalid credentials")
-    
-    access_token = create_access_token({"org_id": org_data["id"]})
-    
-    return {
-        "access_token": access_token,
-        "organization": {
-            "id": org_data["id"],
-            "name": org_data["name"],
-            "email": org_data["admin_email"]
+    try:
+        # Validate input data
+        if not login_data.email or not login_data.password:
+            raise HTTPException(400, "Email and password are required")
+        
+        import hashlib
+        password_hash = hashlib.sha256(login_data.password.encode()).hexdigest()
+        
+        org_data = await db.organizations.find_one({
+            "admin_email": login_data.email,
+            "admin_password_hash": password_hash
+        })
+        
+        if not org_data:
+            raise HTTPException(401, "Invalid email or password")
+        
+        access_token = create_access_token({"org_id": org_data["id"]})
+        
+        return {
+            "access_token": access_token,
+            "organization": {
+                "id": org_data["id"],
+                "name": org_data["name"],
+                "email": org_data["admin_email"]
+            }
         }
-    }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Login error: {e}")
+        raise HTTPException(500, f"Login failed: {str(e)}")
 
 @api_router.post("/organizations/configure-bbms")
 async def configure_bbms(
