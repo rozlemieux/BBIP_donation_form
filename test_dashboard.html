@@ -1,0 +1,26 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Dashboard Access</title>
+</head>
+<body>
+    <h1>Testing Dashboard Access</h1>
+    <button id="accessDashboard">Access Dashboard</button>
+
+    <script>
+        document.getElementById('accessDashboard').addEventListener('click', function() {
+            // Token from the login API response
+            const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJvcmdfaWQiOiI0OTdmY2ZjYS1mY2RiLTRlY2UtYTYyOS1lZDM2ZGI1ZTYxZWEiLCJleHAiOjE3NDg1MjA4NzR9.EhI1_RhK_9CpLkS5chRbc8oZL2_e8rJe7jvS_J3LdhQ";
+            
+            // Store the token in localStorage
+            localStorage.setItem('auth_token', token);
+            
+            // Redirect to the dashboard
+            window.location.href = 'https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com/dashboard';
+        });
+    </script>
+</body>
+</html>
