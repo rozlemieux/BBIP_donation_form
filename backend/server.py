@@ -211,35 +211,48 @@ async def get_organization(org_id: str) -> Organization:
 @api_router.post("/organizations/register")
 async def register_organization(org_data: OrganizationCreate):
     """Register a new organization"""
-    # Check if email already exists
-    existing = await db.organizations.find_one({"admin_email": org_data.admin_email})
-    if existing:
-        raise HTTPException(400, "Organization with this email already exists")
-    
-    # Hash password (simple implementation)
-    import hashlib
-    password_hash = hashlib.sha256(org_data.admin_password.encode()).hexdigest()
-    
-    organization = Organization(
-        name=org_data.name,
-        admin_email=org_data.admin_email,
-        admin_password_hash=password_hash
-    )
-    
-    await db.organizations.insert_one(organization.dict())
-    
-    # Create access token
-    access_token = create_access_token({"org_id": organization.id})
-    
-    return {
-        "message": "Organization registered successfully",
-        "access_token": access_token,
-        "organization": {
-            "id": organization.id,
-            "name": organization.name,
-            "email": organization.admin_email
+    try:
+        # Validate input data
+        if not org_data.name or not org_data.admin_email or not org_data.admin_password:
+            raise HTTPException(400, "Name, email, and password are required")
+        
+        if len(org_data.admin_password) < 6:
+            raise HTTPException(400, "Password must be at least 6 characters long")
+        
+        # Check if email already exists
+        existing = await db.organizations.find_one({"admin_email": org_data.admin_email})
+        if existing:
+            raise HTTPException(400, "Organization with this email already exists")
+        
+        # Hash password (simple implementation)
+        import hashlib
+        password_hash = hashlib.sha256(org_data.admin_password.encode()).hexdigest()
+        
+        organization = Organization(
+            name=org_data.name,
+            admin_email=org_data.admin_email,
+            admin_password_hash=password_hash
+        )
+        
+        await db.organizations.insert_one(organization.dict())
+        
+        # Create access token
+        access_token = create_access_token({"org_id": organization.id})
+        
+        return {
+            "message": "Organization registered successfully",
+            "access_token": access_token,
+            "organization": {
+                "id": organization.id,
+                "name": organization.name,
+                "email": organization.admin_email
+            }
         }
-    }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Registration error: {e}")
+        raise HTTPException(500, f"Registration failed: {str(e)}")
 
 @api_router.post("/organizations/login")
 async def login_organization(login_data: AdminLogin):
