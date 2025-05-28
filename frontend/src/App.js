@@ -97,10 +97,30 @@ const AuthPage = ({ onLogin }) => {
     setError('');
 
     try {
+      // Validate form data
+      if (!formData.email?.trim() || !formData.password?.trim()) {
+        throw new Error('Email and password are required');
+      }
+
+      if (!isLogin && !formData.name?.trim()) {
+        throw new Error('Organization name is required');
+      }
+
+      if (formData.password.length < 6) {
+        throw new Error('Password must be at least 6 characters long');
+      }
+
       const endpoint = isLogin ? '/organizations/login' : '/organizations/register';
       const payload = isLogin ? 
-        { email: formData.email, password: formData.password } :
-        formData;
+        { email: formData.email.trim(), password: formData.password } :
+        { 
+          name: formData.name.trim(), 
+          admin_email: formData.email.trim(), 
+          admin_password: formData.password 
+        };
+
+      console.log('Sending request to:', `${API}${endpoint}`);
+      console.log('Payload:', { ...payload, admin_password: '[HIDDEN]', password: '[HIDDEN]' });
 
       const response = await axios.post(`${API}${endpoint}`, payload);
       
