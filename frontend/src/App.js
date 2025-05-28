@@ -233,7 +233,10 @@ const DashboardHeader = ({ organization, onLogout, currentView, setCurrentView }
             </h1>
           </div>
           
-          <div className="flex items-center space-x-6">
+      <div className="flex items-center space-x-6">
+            <div className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">
+              🧪 Test Mode
+            </div>
             <nav className="flex space-x-1">
               {navigation.map(item => (
                 <button
