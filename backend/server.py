@@ -149,20 +149,27 @@ class BlackbaudClient:
                 "Content-Type": "application/json"
             }
             
+            # Use test URLs for sandbox environment
+            return_url = f"https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com/success"
+            cancel_url = f"https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com/cancel"
+            
             checkout_data = {
                 "merchant_account_id": merchant_id,
                 "amount": {
                     "value": int(donation.amount * 100),  # Convert to cents
                     "currency": "USD"
                 },
-                "return_url": f"https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com/success",
-                "cancel_url": f"https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com/cancel",
+                "return_url": return_url,
+                "cancel_url": cancel_url,
                 "metadata": {
                     "donor_email": donation.donor_email,
                     "donor_name": donation.donor_name,
-                    "org_id": donation.org_id
+                    "org_id": donation.org_id,
+                    "test_mode": "true" if os.environ.get('BB_ENVIRONMENT') == 'sandbox' else "false"
                 }
             }
+            
+            logging.info(f"Creating checkout in {os.environ.get('BB_ENVIRONMENT', 'unknown')} mode for ${donation.amount}")
             
             async with httpx.AsyncClient() as client:
                 response = await client.post(
@@ -173,9 +180,13 @@ class BlackbaudClient:
                 )
                 
                 if response.status_code != 201:
+                    logging.error(f"Checkout creation failed: {response.status_code} - {response.text}")
                     raise HTTPException(400, f"Failed to create checkout: {response.text}")
                 
-                return response.json()
+                checkout_response = response.json()
+                logging.info(f"Checkout created successfully: {checkout_response.get('id')}")
+                
+                return checkout_response
                 
         except Exception as e:
             logging.error(f"Error creating payment checkout: {e}")
