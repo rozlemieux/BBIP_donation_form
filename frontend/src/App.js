@@ -571,6 +571,10 @@ const BBMSConfig = ({ organization, authToken, onUpdate }) => {
       <div className="bg-white rounded-lg shadow-sm border p-6">
         <h3 className="text-lg font-medium text-gray-800 mb-4">Blackbaud BBMS Configuration</h3>
         
+        <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-md mb-4">
+          🧪 <strong>Test Mode Active:</strong> All payments will be processed in Blackbaud's sandbox environment. No real money will be charged.
+        </div>
+        
         {organization?.has_bbms_configured && (
           <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md mb-6">
             ✅ BBMS is configured and ready to accept donations
