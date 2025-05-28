@@ -22,11 +22,14 @@ function App() {
       const response = await axios.get(`${API}/organizations/me`, {
         headers: { Authorization: `Bearer ${authToken}` }
       });
-      setOrganization(response.data);
+      if (response.data) {
+        setOrganization(response.data);
+      }
     } catch (error) {
       console.error('Failed to fetch organization:', error);
       localStorage.removeItem('authToken');
       setAuthToken(null);
+      setOrganization(null);
     }
   };
 
