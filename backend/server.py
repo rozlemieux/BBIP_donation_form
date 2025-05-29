@@ -551,6 +551,9 @@ async def handle_bbms_oauth_callback(callback_data: BBMSOAuthCallback):
         }
         
         logging.info(f"Exchanging code for token with user's app credentials")
+        logging.info(f"Using App ID: {temp_app_id[:8]}...")
+        logging.info(f"Redirect URI: {redirect_uri}")
+        logging.info(f"Code length: {len(callback_data.code)}")
         
         async with httpx.AsyncClient() as client:
             response = await client.post(
@@ -560,22 +563,33 @@ async def handle_bbms_oauth_callback(callback_data: BBMSOAuthCallback):
                 timeout=30.0
             )
             
+            logging.info(f"Token exchange response: {response.status_code}")
+            
             if response.status_code != 200:
                 error_text = response.text
                 logging.error(f"Token exchange failed: {response.status_code} - {error_text}")
                 
                 try:
                     error_data = response.json()
-                    if error_data.get("error") == "invalid_grant":
-                        raise HTTPException(400, "Authorization code expired or invalid. Please try the OAuth flow again.")
-                    elif error_data.get("error") == "invalid_client":
-                        raise HTTPException(400, "Invalid application credentials. Please check your Blackbaud App ID and Secret.")
+                    error_type = error_data.get("error", "unknown")
+                    error_desc = error_data.get("error_description", "Unknown error")
+                    
+                    if error_type == "invalid_grant":
+                        # This usually means the code expired or was already used
+                        raise HTTPException(400, "Authorization code expired or already used. Please try the OAuth flow again.")
+                    elif error_type == "invalid_client":
+                        raise HTTPException(400, "Invalid Blackbaud App ID or Secret. Please check your credentials.")
+                    elif error_type == "invalid_request":
+                        raise HTTPException(400, f"Invalid OAuth request: {error_desc}")
                     else:
-                        raise HTTPException(400, f"OAuth error: {error_data.get('error_description', 'Unknown error')}")
-                except:
-                    raise HTTPException(400, f"Failed to exchange code for token: {error_text}")
+                        raise HTTPException(400, f"OAuth error ({error_type}): {error_desc}")
+                except ValueError:
+                    # Response is not JSON
+                    raise HTTPException(400, f"Token exchange failed: {error_text}")
             
             token_data = response.json()
+            logging.info(f"Token exchange successful. Access token received: {bool(token_data.get('access_token'))}")
+        
         
         # Test the token (but don't fail if validation doesn't work - just log)
         access_token = token_data.get("access_token")
