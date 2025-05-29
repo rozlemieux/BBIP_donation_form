@@ -446,21 +446,34 @@ async def start_bbms_oauth(
         import secrets
         state = f"{org_id}:{secrets.token_urlsafe(32)}"
         
-        # Store state in organization temporarily
+        # Store state and app credentials in organization temporarily
         await db.organizations.update_one(
             {"id": org_id},
             {
                 "$set": {
                     "oauth_state": state,
                     "bb_merchant_id": oauth_data.merchant_id,
+                    "temp_app_id": oauth_data.app_id,
+                    "temp_app_secret": encrypt_data(oauth_data.app_secret),
                     "updated_at": datetime.utcnow()
                 }
             }
         )
         
-        # Generate OAuth URL
+        # Generate OAuth URL using user's app credentials
+        from urllib.parse import urlencode
         redirect_uri = "https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com/auth/blackbaud/callback"
-        oauth_url = await bb_client.generate_oauth_url(state, redirect_uri)
+        
+        params = {
+            "client_id": oauth_data.app_id,
+            "response_type": "code",
+            "redirect_uri": redirect_uri,
+            "state": state,
+            "scope": "payments"
+        }
+        
+        query_string = urlencode(params)
+        oauth_url = f"{BB_OAUTH_URL}/authorization?{query_string}"
         
         return {
             "oauth_url": oauth_url,
