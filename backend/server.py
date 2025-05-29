@@ -124,9 +124,10 @@ class BlackbaudClient:
         self.payment_subscription_key = os.environ.get('BB_PAYMENT_API_SUBSCRIPTION')
         self.standard_subscription_key = os.environ.get('BB_STANDARD_API_SUBSCRIPTION')
 
-    async def test_credentials(self, access_token: str) -> bool:
+    async def test_credentials(self, access_token: str, test_mode: bool = True) -> bool:
         """Test if the provided access token is valid"""
         try:
+            base_url = "https://api.sky.blackbaud.com/sandbox" if test_mode else "https://api.sky.blackbaud.com"
             headers = {
                 "Bb-Api-Subscription-Key": self.standard_subscription_key,
                 "Authorization": f"Bearer {access_token}",
@@ -135,7 +136,7 @@ class BlackbaudClient:
             
             async with httpx.AsyncClient() as client:
                 response = await client.get(
-                    f"{self.base_url}/constituent/v1/constituents?limit=1",
+                    f"{base_url}/constituent/v1/constituents?limit=1",
                     headers=headers,
                     timeout=30.0
                 )
@@ -144,7 +145,7 @@ class BlackbaudClient:
             logging.error(f"Error testing Blackbaud credentials: {e}")
             return False
 
-    async def create_payment_checkout(self, donation: DonationRequest, merchant_id: str, access_token: str) -> Dict:
+    async def create_payment_checkout(self, donation: DonationRequest, merchant_id: str, access_token: str, test_mode: bool = True) -> Dict:
         """Create a payment checkout session"""
         try:
             headers = {
