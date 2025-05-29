@@ -407,9 +407,9 @@ async def create_donation_checkout(donation: DonationRequest):
     # Decrypt access token
     access_token = decrypt_data(organization.bb_access_token)
     
-    # Create checkout session
+    # Create checkout session using organization's test mode setting
     checkout_response = await bb_client.create_payment_checkout(
-        donation, organization.bb_merchant_id, access_token
+        donation, organization.bb_merchant_id, access_token, organization.test_mode
     )
     
     # Store transaction
