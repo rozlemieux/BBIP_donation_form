@@ -219,6 +219,7 @@ const DashboardHeader = ({ organization, onLogout, currentView, setCurrentView }
     { id: 'dashboard', label: 'Dashboard', icon: '📊' },
     { id: 'form-settings', label: 'Form Settings', icon: '⚙️' },
     { id: 'bbms-config', label: 'Payment Setup', icon: '💳' },
+    { id: 'mode-settings', label: 'Mode Settings', icon: '🔧' },
     { id: 'embed-code', label: 'Embed Code', icon: '🔗' },
     { id: 'transactions', label: 'Transactions', icon: '📈' }
   ];
