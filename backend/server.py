@@ -486,7 +486,7 @@ async def start_bbms_oauth(
             "response_type": "code",
             "redirect_uri": redirect_uri,
             "state": state,
-            "scope": "payments"
+            "scope": "openid offline_access"
         }
         
         query_string = urlencode(params)
