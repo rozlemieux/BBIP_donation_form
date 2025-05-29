@@ -313,10 +313,14 @@ async def configure_bbms(
     org_id: str = Depends(verify_token)
 ):
     """Configure BBMS credentials for organization"""
+    # Get organization to check test mode
+    organization = await get_organization(org_id)
+    
     # Test the credentials first
-    is_valid = await bb_client.test_credentials(credentials.access_token)
+    is_valid = await bb_client.test_credentials(credentials.access_token, organization.test_mode)
     if not is_valid:
-        raise HTTPException(400, "Invalid Blackbaud credentials")
+        mode_text = "test" if organization.test_mode else "production"
+        raise HTTPException(400, f"Invalid Blackbaud credentials for {mode_text} environment")
     
     # Encrypt and store credentials
     encrypted_token = encrypt_data(credentials.access_token)
