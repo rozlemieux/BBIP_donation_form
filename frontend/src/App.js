@@ -234,8 +234,12 @@ const DashboardHeader = ({ organization, onLogout, currentView, setCurrentView }
           </div>
           
       <div className="flex items-center space-x-6">
-            <div className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium">
-              🧪 Test Mode
+            <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+              organization?.test_mode 
+                ? 'bg-yellow-100 text-yellow-800' 
+                : 'bg-green-100 text-green-800'
+            }`}>
+              {organization?.test_mode ? '🧪 Test Mode' : '🚀 Live Mode'}
             </div>
             <nav className="flex space-x-1">
               {navigation.map(item => (
