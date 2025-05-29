@@ -152,6 +152,66 @@ class DonationBuilderAPITester:
             print("BBMS configuration test passed (expected failure with dummy credentials)")
             return True
         return False
+        
+    def test_oauth_start(self):
+        """Test starting the OAuth2 flow"""
+        if not self.token:
+            print("❌ Cannot test OAuth start - no auth token")
+            return False
+            
+        oauth_data = {
+            "merchant_id": "test_merchant_id"
+        }
+        
+        success, response = self.run_test(
+            "Start OAuth2 Flow",
+            "POST",
+            "organizations/bbms-oauth/start",
+            200,
+            data=oauth_data
+        )
+        
+        if success:
+            if 'oauth_url' in response and 'state' in response:
+                print(f"✅ OAuth URL generated: {response['oauth_url'][:60]}...")
+                print(f"✅ State parameter generated: {response['state'][:20]}...")
+                return True, response
+            else:
+                print("❌ OAuth response missing required fields")
+                return False, {}
+        return False, {}
+        
+    def test_oauth_callback(self):
+        """Test the OAuth2 callback handling"""
+        # First start the OAuth flow to get a state parameter
+        success, start_response = self.test_oauth_start()
+        if not success:
+            print("❌ Cannot test OAuth callback - OAuth start failed")
+            return False
+            
+        # Now test the callback with a dummy code
+        callback_data = {
+            "code": "test_auth_code",
+            "state": start_response['state'],
+            "merchant_id": "test_merchant_id"
+        }
+        
+        # This will fail with 400 since we're using a dummy code
+        # But it should validate the state parameter correctly
+        success, response = self.run_test(
+            "OAuth2 Callback (Expected to fail with dummy code)",
+            "POST",
+            "organizations/bbms-oauth/callback",
+            400,
+            data=callback_data
+        )
+        
+        # Since we're using a dummy code, we expect a 400 error
+        # So we'll count this as a success if we get the expected 400
+        if success:
+            print("✅ OAuth callback test passed (expected failure with dummy code)")
+            return True
+        return False
 
     def test_get_donation_form_config(self):
         """Test getting donation form configuration"""
