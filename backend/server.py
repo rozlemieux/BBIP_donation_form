@@ -345,6 +345,7 @@ async def get_my_organization(org_id: str = Depends(verify_token)):
         "name": organization.name,
         "email": organization.admin_email,
         "has_bbms_configured": bool(organization.bb_access_token),
+        "test_mode": organization.test_mode,
         "form_settings": organization.form_settings,
         "created_at": organization.created_at
     }
