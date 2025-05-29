@@ -82,6 +82,8 @@ class BBMSCredentials(BaseModel):
 
 class BBMSOAuthStart(BaseModel):
     merchant_id: str
+    app_id: str
+    app_secret: str
 
 class BBMSOAuthCallback(BaseModel):
     code: str
