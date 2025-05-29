@@ -755,9 +755,13 @@ async def oauth_callback_page(code: str = None, state: str = None, error: str = 
             
             function closeWindow() {{
                 if (window.opener) {{
+                    const success = !document.getElementById('error').classList.contains('hidden');
+                    const error = success ? null : document.getElementById('error-message').textContent;
+                    
                     window.opener.postMessage({{
                         type: 'BLACKBAUD_AUTH_COMPLETE',
-                        success: !document.getElementById('error').classList.contains('hidden')
+                        success: success,
+                        error: error
                     }}, '*');
                     window.close();
                 }} else {{
