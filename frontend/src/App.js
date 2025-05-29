@@ -790,7 +790,13 @@ const BBMSConfig = ({ organization, authToken, onUpdate }) => {
                 <li>Click "Create Application" or "Add Application"</li>
                 <li>Fill in application details (name, description, etc.)</li>
                 <li>Enable <strong>Payments API</strong> in the API access section</li>
-                <li>Set redirect URI to: <code className="bg-blue-100 px-1 rounded">https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com/auth/blackbaud/callback</code></li>
+                <li className="bg-red-50 border border-red-200 p-2 rounded">
+                  <strong>⚠️ CRITICAL:</strong> Set redirect URI to exactly: <br/>
+                  <code className="bg-red-100 px-2 py-1 rounded text-xs break-all">
+                    https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com/auth/blackbaud/callback
+                  </code>
+                  <br/><span className="text-red-700 text-xs">This must match exactly (including https and the path)</span>
+                </li>
                 <li>Save your application</li>
               </ol>
             </div>
