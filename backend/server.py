@@ -368,6 +368,25 @@ async def update_form_settings(
     
     return {"message": "Form settings updated successfully"}
 
+@api_router.put("/organizations/test-mode")
+async def toggle_test_mode(
+    toggle_data: TestModeToggle,
+    org_id: str = Depends(verify_token)
+):
+    """Toggle test mode for organization"""
+    await db.organizations.update_one(
+        {"id": org_id},
+        {
+            "$set": {
+                "test_mode": toggle_data.test_mode,
+                "updated_at": datetime.utcnow()
+            }
+        }
+    )
+    
+    mode_text = "test" if toggle_data.test_mode else "production"
+    return {"message": f"Switched to {mode_text} mode successfully"}
+
 @api_router.post("/donations/checkout")
 async def create_donation_checkout(donation: DonationRequest):
     """Create a checkout session for donation"""
