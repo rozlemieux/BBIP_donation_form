@@ -551,8 +551,72 @@ const BBMSConfig = ({ organization, authToken, onUpdate }) => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [showManualForm, setShowManualForm] = useState(false);
+  const [oauthLoading, setOauthLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
+  // Listen for OAuth completion
+  useEffect(() => {
+    const handleMessage = (event) => {
+      if (event.data.type === 'BLACKBAUD_AUTH_COMPLETE') {
+        if (event.data.success) {
+          setSuccess(true);
+          onUpdate();
+          setTimeout(() => setSuccess(false), 3000);
+        }
+        setOauthLoading(false);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [onUpdate]);
+
+  const handleOAuthConnect = async () => {
+    if (!credentials.merchant_id.trim()) {
+      setError('Please enter your Merchant Account ID first');
+      return;
+    }
+
+    setOauthLoading(true);
+    setError('');
+
+    try {
+      // Store merchant_id for the callback
+      localStorage.setItem('bb_merchant_id', credentials.merchant_id);
+
+      const response = await axios.post(`${API}/organizations/bbms-oauth/start`, 
+        { merchant_id: credentials.merchant_id }, 
+        { headers: { Authorization: `Bearer ${authToken}` } }
+      );
+
+      // Open OAuth window
+      const popup = window.open(
+        response.data.oauth_url,
+        'blackbaud_oauth',
+        'width=600,height=700,scrollbars=yes,resizable=yes'
+      );
+
+      // Check if popup was blocked
+      if (!popup) {
+        throw new Error('Popup blocked. Please allow popups for this site.');
+      }
+
+      // Monitor popup
+      const checkClosed = setInterval(() => {
+        if (popup.closed) {
+          clearInterval(checkClosed);
+          setOauthLoading(false);
+        }
+      }, 1000);
+
+    } catch (error) {
+      console.error('OAuth start failed:', error);
+      setError(error.response?.data?.detail || error.message || 'Failed to start OAuth flow');
+      setOauthLoading(false);
+    }
+  };
+
+  const handleManualSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
@@ -598,55 +662,113 @@ const BBMSConfig = ({ organization, authToken, onUpdate }) => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {/* OAuth2 Flow (Recommended) */}
+        <div className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Merchant Account ID
-            </label>
-            <input
-              type="text"
-              required
-              value={credentials.merchant_id}
-              onChange={(e) => setCredentials({...credentials, merchant_id: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Your BBMS Merchant Account ID"
-            />
+            <h4 className="font-medium text-gray-800 mb-3">🚀 Recommended: Connect with Blackbaud</h4>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Merchant Account ID
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={credentials.merchant_id}
+                  onChange={(e) => setCredentials({...credentials, merchant_id: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Your BBMS Merchant Account ID"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Find this in your Blackbaud BBMS merchant portal
+                </p>
+              </div>
+
+              <button
+                onClick={handleOAuthConnect}
+                disabled={oauthLoading || !credentials.merchant_id.trim()}
+                className="w-full bg-blue-600 text-white font-medium py-3 px-4 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
+              >
+                {oauthLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Connecting...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 18c-4.418 0-8-3.582-8-8s3.582-8 8-8 8 3.582 8 8-3.582 8-8 8zm-1-13v6l5 3 1-1.5-4-2.5V7h-2z"/>
+                    </svg>
+                    Connect with Blackbaud
+                  </>
+                )}
+              </button>
+              
+              <p className="text-sm text-gray-600 text-center">
+                Secure OAuth2 authentication - no need to manually enter tokens
+              </p>
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Access Token
-            </label>
-            <input
-              type="password"
-              required
-              value={credentials.access_token}
-              onChange={(e) => setCredentials({...credentials, access_token: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Your Blackbaud Access Token"
-            />
+          {/* Divider */}
+          <div className="flex items-center">
+            <div className="flex-grow border-t border-gray-300"></div>
+            <span className="flex-shrink-0 px-4 text-sm text-gray-500">or</span>
+            <div className="flex-grow border-t border-gray-300"></div>
           </div>
 
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-              {error}
+          {/* Manual Token Entry */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-medium text-gray-800">🔧 Advanced: Manual Token Entry</h4>
+              <button
+                onClick={() => setShowManualForm(!showManualForm)}
+                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+              >
+                {showManualForm ? 'Hide Manual Form' : 'Show Manual Form'}
+              </button>
             </div>
-          )}
 
-          {success && (
-            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md">
-              BBMS credentials configured successfully!
-            </div>
-          )}
+            {showManualForm && (
+              <form onSubmit={handleManualSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Access Token
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    value={credentials.access_token}
+                    onChange={(e) => setCredentials({...credentials, access_token: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Your Blackbaud Access Token"
+                  />
+                </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-blue-600 text-white font-medium py-2 px-6 rounded-md hover:bg-blue-700 disabled:bg-gray-400"
-          >
-            {loading ? 'Configuring...' : 'Configure BBMS'}
-          </button>
-        </form>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-gray-600 text-white font-medium py-2 px-4 rounded-md hover:bg-gray-700 disabled:bg-gray-400"
+                >
+                  {loading ? 'Configuring...' : 'Configure BBMS Manually'}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mt-4">
+            {error}
+          </div>
+        )}
+
+        {success && (
+          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md mt-4">
+            BBMS credentials configured successfully!
+          </div>
+        )}
 
         <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
           <h4 className="font-medium text-blue-800 mb-2">📋 How to get your Blackbaud credentials:</h4>
@@ -668,55 +790,30 @@ const BBMSConfig = ({ organization, authToken, onUpdate }) => {
                 <li>Click "Create Application" or "Add Application"</li>
                 <li>Fill in application details (name, description, etc.)</li>
                 <li>Enable <strong>Payments API</strong> in the API access section</li>
-                <li>Set redirect URI to: <code className="bg-blue-100 px-1 rounded">https://localhost</code></li>
+                <li>Set redirect URI to: <code className="bg-blue-100 px-1 rounded">https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com/auth/blackbaud/callback</code></li>
                 <li>Save your application</li>
               </ol>
             </div>
             
             <div>
-              <p className="font-medium mb-2">Step 3: Get Application Credentials</p>
+              <p className="font-medium mb-2">Step 3: Use OAuth2 Flow</p>
               <ol className="list-decimal list-inside space-y-1 ml-4">
-                <li>In your application settings, find your <strong>Application ID</strong></li>
-                <li>Note down your <strong>Application Secret</strong></li>
-                <li>These are your OAuth2 credentials</li>
+                <li>Enter your Merchant Account ID above</li>
+                <li>Click "Connect with Blackbaud"</li>
+                <li>Log in to Blackbaud when prompted</li>
+                <li>Authorize the application</li>
+                <li>You'll be redirected back automatically!</li>
               </ol>
-            </div>
-            
-            <div>
-              <p className="font-medium mb-2">Step 4: Get Access Token (Manual Method)</p>
-              <ol className="list-decimal list-inside space-y-1 ml-4">
-                <li>Go to the "Authorization" section in your application</li>
-                <li>Click "Authorize Application" or use the OAuth2 flow</li>
-                <li>This will redirect you and provide an authorization code</li>
-                <li>Exchange the code for an access token using the OAuth2 token endpoint</li>
-              </ol>
-            </div>
-            
-            <div>
-              <p className="font-medium mb-2">Step 5: Get Merchant Account ID</p>
-              <ol className="list-decimal list-inside space-y-1 ml-4">
-                <li>Log into your Blackbaud BBMS merchant portal</li>
-                <li>Navigate to Account Settings or Configuration</li>
-                <li>Find your Merchant Account ID (usually starts with "BBMS")</li>
-              </ol>
-            </div>
-            
-            <div className="bg-yellow-50 border border-yellow-200 rounded p-3 mt-4">
-              <p className="font-medium text-yellow-800">⚠️ Note:</p>
-              <p className="text-yellow-700">
-                Getting an access token manually is complex. For a production application, 
-                we recommend implementing the full OAuth2 flow. Contact us if you need help 
-                with the OAuth2 integration.
-              </p>
             </div>
             
             <div className="bg-green-50 border border-green-200 rounded p-3 mt-4">
-              <p className="font-medium text-green-800">💡 Alternative:</p>
-              <p className="text-green-700">
-                If you're having trouble with the manual token process, you can start in 
-                Test Mode with dummy credentials to explore the platform, then get proper 
-                credentials when you're ready to go live.
-              </p>
+              <p className="font-medium text-green-800">✨ OAuth2 Benefits:</p>
+              <ul className="text-green-700 list-disc list-inside mt-1">
+                <li>Secure - No manual token handling</li>
+                <li>Automatic - Tokens refresh automatically</li>
+                <li>Easy - Just click and authorize</li>
+                <li>Safe - Follows OAuth2 best practices</li>
+              </ul>
             </div>
           </div>
         </div>
