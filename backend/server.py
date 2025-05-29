@@ -676,6 +676,121 @@ async def get_organization_transactions(
     transactions = await db.transactions.find({"org_id": org_id}).sort("created_at", -1).to_list(100)
     return transactions
 
+# OAuth callback route for frontend
+@app.get("/auth/blackbaud/callback")
+async def oauth_callback_page(code: str = None, state: str = None, error: str = None):
+    """OAuth callback page that handles the redirect and posts back to API"""
+    return HTMLResponse(f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Blackbaud Authentication</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-gray-50 flex items-center justify-center min-h-screen">
+        <div class="bg-white rounded-lg shadow-lg p-8 max-w-md w-full mx-4">
+            <div id="loading" class="text-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <h2 class="text-xl font-semibold text-gray-800 mb-2">Connecting to Blackbaud...</h2>
+                <p class="text-gray-600">Please wait while we complete the authentication.</p>
+            </div>
+            
+            <div id="success" class="hidden text-center">
+                <div class="text-green-500 text-4xl mb-4">✅</div>
+                <h2 class="text-xl font-semibold text-gray-800 mb-2">Authentication Successful!</h2>
+                <p class="text-gray-600 mb-4">Your Blackbaud account has been connected.</p>
+                <button onclick="closeWindow()" class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700">
+                    Continue
+                </button>
+            </div>
+            
+            <div id="error" class="hidden text-center">
+                <div class="text-red-500 text-4xl mb-4">❌</div>
+                <h2 class="text-xl font-semibold text-gray-800 mb-2">Authentication Failed</h2>
+                <p class="text-gray-600 mb-4" id="error-message">Something went wrong during authentication.</p>
+                <button onclick="closeWindow()" class="bg-gray-600 text-white px-6 py-2 rounded-md hover:bg-gray-700">
+                    Close
+                </button>
+            </div>
+        </div>
+        
+        <script>
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const state = urlParams.get('state');
+            const error = urlParams.get('error');
+            
+            function showSuccess() {{
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('success').classList.remove('hidden');
+            }}
+            
+            function showError(message) {{
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('error').classList.remove('hidden');
+                document.getElementById('error-message').textContent = message;
+            }}
+            
+            function closeWindow() {{
+                if (window.opener) {{
+                    window.opener.postMessage({{
+                        type: 'BLACKBAUD_AUTH_COMPLETE',
+                        success: !document.getElementById('error').classList.contains('hidden')
+                    }}, '*');
+                    window.close();
+                }} else {{
+                    window.location.href = '/';
+                }}
+            }}
+            
+            async function handleCallback() {{
+                if (error) {{
+                    showError(`Authentication error: ${{error}}`);
+                    return;
+                }}
+                
+                if (!code || !state) {{
+                    showError('Missing authorization code or state parameter.');
+                    return;
+                }}
+                
+                try {{
+                    // Extract merchant_id from localStorage or state if available
+                    const stateParts = state.split(':');
+                    const merchant_id = localStorage.getItem('bb_merchant_id') || 'default';
+                    
+                    const response = await fetch('/api/organizations/bbms-oauth/callback', {{
+                        method: 'POST',
+                        headers: {{
+                            'Content-Type': 'application/json'
+                        }},
+                        body: JSON.stringify({{
+                            code: code,
+                            state: state,
+                            merchant_id: merchant_id
+                        }})
+                    }});
+                    
+                    if (response.ok) {{
+                        showSuccess();
+                    }} else {{
+                        const errorData = await response.json();
+                        showError(errorData.detail || 'Failed to complete authentication');
+                    }}
+                }} catch (err) {{
+                    showError('Network error occurred during authentication');
+                }}
+            }}
+            
+            // Start the callback handling
+            handleCallback();
+        </script>
+    </body>
+    </html>
+    """)
+
 # Embed route for iframe
 @app.get("/embed/donate/{org_id}")
 async def serve_donation_embed(org_id: str):
