@@ -713,6 +713,40 @@ const BBMSConfig = ({ organization, authToken, onUpdate }) => {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Blackbaud App ID
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={credentials.app_id}
+                  onChange={(e) => setCredentials({...credentials, app_id: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Your Blackbaud Application ID"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  From your Blackbaud developer application settings
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Blackbaud App Secret
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={credentials.app_secret}
+                  onChange={(e) => setCredentials({...credentials, app_secret: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Your Blackbaud Application Secret"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Keep this secret - from your Blackbaud developer application
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Merchant Account ID
                 </label>
                 <input
@@ -730,7 +764,7 @@ const BBMSConfig = ({ organization, authToken, onUpdate }) => {
 
               <button
                 onClick={handleOAuthConnect}
-                disabled={oauthLoading || !credentials.merchant_id.trim()}
+                disabled={oauthLoading || !credentials.merchant_id.trim() || !credentials.app_id.trim() || !credentials.app_secret.trim()}
                 className="w-full bg-blue-600 text-white font-medium py-3 px-4 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
               >
                 {oauthLoading ? (
