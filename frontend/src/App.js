@@ -69,6 +69,9 @@ function App() {
         {currentView === 'bbms-config' && (
           <BBMSConfig organization={organization} authToken={authToken} onUpdate={fetchOrganization} />
         )}
+        {currentView === 'mode-settings' && (
+          <ModeSettings organization={organization} authToken={authToken} onUpdate={fetchOrganization} />
+        )}
         {currentView === 'embed-code' && (
           <EmbedCode organization={organization} />
         )}
