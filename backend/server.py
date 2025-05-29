@@ -148,6 +148,7 @@ class BlackbaudClient:
     async def create_payment_checkout(self, donation: DonationRequest, merchant_id: str, access_token: str, test_mode: bool = True) -> Dict:
         """Create a payment checkout session"""
         try:
+            base_url = "https://api.sky.blackbaud.com/sandbox" if test_mode else "https://api.sky.blackbaud.com"
             headers = {
                 "Bb-Api-Subscription-Key": self.payment_subscription_key,
                 "Authorization": f"Bearer {access_token}",
@@ -170,15 +171,16 @@ class BlackbaudClient:
                     "donor_email": donation.donor_email,
                     "donor_name": donation.donor_name,
                     "org_id": donation.org_id,
-                    "test_mode": "true" if os.environ.get('BB_ENVIRONMENT') == 'sandbox' else "false"
+                    "test_mode": "true" if test_mode else "false"
                 }
             }
             
-            logging.info(f"Creating checkout in {os.environ.get('BB_ENVIRONMENT', 'unknown')} mode for ${donation.amount}")
+            mode_text = "sandbox" if test_mode else "production"
+            logging.info(f"Creating checkout in {mode_text} mode for ${donation.amount}")
             
             async with httpx.AsyncClient() as client:
                 response = await client.post(
-                    f"{self.base_url}/payments/v1/checkouts",
+                    f"{base_url}/payments/v1/checkouts",
                     headers=headers,
                     json=checkout_data,
                     timeout=30.0
@@ -189,7 +191,7 @@ class BlackbaudClient:
                     raise HTTPException(400, f"Failed to create checkout: {response.text}")
                 
                 checkout_response = response.json()
-                logging.info(f"Checkout created successfully: {checkout_response.get('id')}")
+                logging.info(f"Checkout created successfully: {checkout_response.get('id')} in {mode_text} mode")
                 
                 return checkout_response
                 
