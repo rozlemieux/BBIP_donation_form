@@ -562,6 +562,8 @@ const BBMSConfig = ({ organization, authToken, onUpdate }) => {
           setSuccess(true);
           onUpdate();
           setTimeout(() => setSuccess(false), 3000);
+        } else {
+          setError(event.data.error || 'OAuth authentication failed');
         }
         setOauthLoading(false);
       }
