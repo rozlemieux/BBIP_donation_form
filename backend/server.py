@@ -111,6 +111,9 @@ class FormSettings(BaseModel):
     organization_description: str
     thank_you_message: str
 
+class TestModeToggle(BaseModel):
+    test_mode: bool
+
 # Blackbaud API Client
 class BlackbaudClient:
     def __init__(self):
