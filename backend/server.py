@@ -132,6 +132,104 @@ class BlackbaudClient:
         self.payment_subscription_key = os.environ.get('BB_PAYMENT_API_SUBSCRIPTION')
         self.standard_subscription_key = os.environ.get('BB_STANDARD_API_SUBSCRIPTION')
 
+    async def generate_oauth_url(self, state: str, redirect_uri: str) -> str:
+        """Generate OAuth2 authorization URL"""
+        from urllib.parse import urlencode
+        
+        params = {
+            "client_id": self.app_id,
+            "response_type": "code",
+            "redirect_uri": redirect_uri,
+            "state": state,
+            "scope": "payments"
+        }
+        
+        query_string = urlencode(params)
+        return f"{self.oauth_url}/authorization?{query_string}"
+
+    async def exchange_code_for_token(self, code: str, redirect_uri: str) -> Dict:
+        """Exchange authorization code for access token"""
+        try:
+            import base64
+            
+            # Create basic auth header
+            auth_string = f"{self.app_id}:{self.app_secret}"
+            auth_bytes = auth_string.encode('ascii')
+            auth_b64 = base64.b64encode(auth_bytes).decode('ascii')
+            
+            headers = {
+                "Authorization": f"Basic {auth_b64}",
+                "Content-Type": "application/x-www-form-urlencoded"
+            }
+            
+            data = {
+                "grant_type": "authorization_code",
+                "code": code,
+                "redirect_uri": redirect_uri
+            }
+            
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    f"{self.oauth_url}/token",
+                    headers=headers,
+                    data=data,
+                    timeout=30.0
+                )
+                
+                if response.status_code != 200:
+                    logging.error(f"Token exchange failed: {response.status_code} - {response.text}")
+                    raise HTTPException(400, f"Failed to exchange code for token: {response.text}")
+                
+                token_data = response.json()
+                logging.info("Successfully exchanged code for access token")
+                
+                return token_data
+                
+        except Exception as e:
+            logging.error(f"Error exchanging code for token: {e}")
+            raise HTTPException(500, f"Token exchange failed: {str(e)}")
+
+    async def refresh_access_token(self, refresh_token: str) -> Dict:
+        """Refresh an expired access token"""
+        try:
+            import base64
+            
+            # Create basic auth header
+            auth_string = f"{self.app_id}:{self.app_secret}"
+            auth_bytes = auth_string.encode('ascii')
+            auth_b64 = base64.b64encode(auth_bytes).decode('ascii')
+            
+            headers = {
+                "Authorization": f"Basic {auth_b64}",
+                "Content-Type": "application/x-www-form-urlencoded"
+            }
+            
+            data = {
+                "grant_type": "refresh_token",
+                "refresh_token": refresh_token
+            }
+            
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    f"{self.oauth_url}/token",
+                    headers=headers,
+                    data=data,
+                    timeout=30.0
+                )
+                
+                if response.status_code != 200:
+                    logging.error(f"Token refresh failed: {response.status_code} - {response.text}")
+                    raise HTTPException(400, f"Failed to refresh token: {response.text}")
+                
+                token_data = response.json()
+                logging.info("Successfully refreshed access token")
+                
+                return token_data
+                
+        except Exception as e:
+            logging.error(f"Error refreshing token: {e}")
+            raise HTTPException(500, f"Token refresh failed: {str(e)}")
+
     async def test_credentials(self, access_token: str, test_mode: bool = True) -> bool:
         """Test if the provided access token is valid"""
         try:
