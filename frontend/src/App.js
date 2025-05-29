@@ -546,7 +546,9 @@ const FormSettings = ({ organization, authToken, onUpdate }) => {
 const BBMSConfig = ({ organization, authToken, onUpdate }) => {
   const [credentials, setCredentials] = useState({
     merchant_id: '',
-    access_token: ''
+    access_token: '',
+    app_id: '',
+    app_secret: ''
   });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
