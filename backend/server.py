@@ -80,6 +80,14 @@ class BBMSCredentials(BaseModel):
     merchant_id: str
     access_token: str
 
+class BBMSOAuthStart(BaseModel):
+    merchant_id: str
+
+class BBMSOAuthCallback(BaseModel):
+    code: str
+    state: str
+    merchant_id: str
+
 class DonationRequest(BaseModel):
     amount: float = Field(..., gt=0)
     donor_email: str
