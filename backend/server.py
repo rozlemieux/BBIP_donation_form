@@ -65,6 +65,7 @@ class Organization(BaseModel):
     bb_merchant_id: Optional[str] = None
     bb_access_token: Optional[str] = None
     bb_refresh_token: Optional[str] = None
+    test_mode: bool = True  # Organizations start in test mode for safety
     form_settings: Dict = Field(default_factory=lambda: {
         "preset_amounts": [25, 50, 100, 250, 500],
         "custom_amount_enabled": True,
