@@ -668,15 +668,24 @@ const BBMSConfig = ({ organization, authToken, onUpdate }) => {
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
             <div className="flex items-start">
               <div className="text-yellow-500 text-xl mr-3">⚠️</div>
-              <div>
+              <div className="flex-1">
                 <h4 className="font-medium text-yellow-800 mb-2">Before Using OAuth2:</h4>
                 <p className="text-yellow-700 text-sm mb-2">
                   You must add this redirect URI to your Blackbaud application settings:
                 </p>
-                <div className="bg-yellow-100 border border-yellow-300 rounded p-2 mb-2">
-                  <code className="text-xs break-all font-mono">
+                <div className="bg-yellow-100 border border-yellow-300 rounded p-2 mb-2 flex items-center justify-between">
+                  <code className="text-xs break-all font-mono flex-1 mr-2">
                     https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com/auth/blackbaud/callback
                   </code>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText('https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com/auth/blackbaud/callback');
+                      alert('Redirect URI copied to clipboard!');
+                    }}
+                    className="text-yellow-700 hover:text-yellow-800 text-xs bg-yellow-200 px-2 py-1 rounded"
+                  >
+                    Copy
+                  </button>
                 </div>
                 <p className="text-yellow-700 text-xs">
                   Without this exact URI in your Blackbaud app settings, OAuth2 will fail with "Invalid redirect_uri" error.
