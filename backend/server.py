@@ -168,6 +168,10 @@ class BlackbaudClient:
                 "redirect_uri": redirect_uri
             }
             
+            logging.info(f"Exchanging code for token with redirect_uri: {redirect_uri}")
+            logging.info(f"Using OAuth URL: {self.oauth_url}/token")
+            logging.info(f"Using App ID: {self.app_id[:8]}...")
+            
             async with httpx.AsyncClient() as client:
                 response = await client.post(
                     f"{self.oauth_url}/token",
@@ -176,15 +180,31 @@ class BlackbaudClient:
                     timeout=30.0
                 )
                 
+                logging.info(f"Token exchange response status: {response.status_code}")
+                
                 if response.status_code != 200:
-                    logging.error(f"Token exchange failed: {response.status_code} - {response.text}")
-                    raise HTTPException(400, f"Failed to exchange code for token: {response.text}")
+                    error_text = response.text
+                    logging.error(f"Token exchange failed: {response.status_code} - {error_text}")
+                    
+                    # Parse error for better user feedback
+                    try:
+                        error_data = response.json()
+                        if error_data.get("error") == "invalid_grant":
+                            raise HTTPException(400, "Authorization code expired or invalid. Please try the OAuth flow again.")
+                        elif error_data.get("error") == "invalid_client":
+                            raise HTTPException(400, "Invalid application credentials. Please check your Blackbaud App ID and Secret.")
+                        else:
+                            raise HTTPException(400, f"OAuth error: {error_data.get('error_description', 'Unknown error')}")
+                    except:
+                        raise HTTPException(400, f"Failed to exchange code for token: {error_text}")
                 
                 token_data = response.json()
                 logging.info("Successfully exchanged code for access token")
                 
                 return token_data
                 
+        except HTTPException:
+            raise
         except Exception as e:
             logging.error(f"Error exchanging code for token: {e}")
             raise HTTPException(500, f"Token exchange failed: {str(e)}")
