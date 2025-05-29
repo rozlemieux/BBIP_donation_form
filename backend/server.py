@@ -757,8 +757,11 @@ async def oauth_callback_page(code: str = None, state: str = None, error: str = 
                 }}
                 
                 try {{
-                    // Extract merchant_id from localStorage or state if available
+                    // Extract org_id from state parameter
                     const stateParts = state.split(':');
+                    const org_id = stateParts[0];
+                    
+                    // Use the merchant_id from localStorage or extract from URL/state
                     const merchant_id = localStorage.getItem('bb_merchant_id') || 'default';
                     
                     const response = await fetch('/api/organizations/bbms-oauth/callback', {{
@@ -774,12 +777,14 @@ async def oauth_callback_page(code: str = None, state: str = None, error: str = 
                     }});
                     
                     if (response.ok) {{
+                        localStorage.removeItem('bb_merchant_id'); // Cleanup
                         showSuccess();
                     }} else {{
                         const errorData = await response.json();
                         showError(errorData.detail || 'Failed to complete authentication');
                     }}
                 }} catch (err) {{
+                    console.error('Callback error:', err);
                     showError('Network error occurred during authentication');
                 }}
             }}
