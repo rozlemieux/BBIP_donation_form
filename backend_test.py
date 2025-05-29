@@ -355,6 +355,11 @@ class DonationBuilderAPITester:
         # Test BBMS configuration (with dummy values)
         self.test_configure_bbms()
         
+        # Test OAuth2 flow
+        print("\n🔍 Testing OAuth2 Flow...")
+        self.test_oauth_start()
+        self.test_oauth_callback()
+        
         # Test test/production mode toggle
         self.test_toggle_test_mode()
         
