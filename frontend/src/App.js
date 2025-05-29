@@ -581,6 +581,11 @@ const BBMSConfig = ({ organization, authToken, onUpdate }) => {
       return;
     }
 
+    if (!credentials.app_id.trim() || !credentials.app_secret.trim()) {
+      setError('Please enter your Blackbaud App ID and App Secret');
+      return;
+    }
+
     setOauthLoading(true);
     setError('');
 
@@ -589,7 +594,11 @@ const BBMSConfig = ({ organization, authToken, onUpdate }) => {
       localStorage.setItem('bb_merchant_id', credentials.merchant_id);
 
       const response = await axios.post(`${API}/organizations/bbms-oauth/start`, 
-        { merchant_id: credentials.merchant_id }, 
+        { 
+          merchant_id: credentials.merchant_id,
+          app_id: credentials.app_id,
+          app_secret: credentials.app_secret
+        }, 
         { headers: { Authorization: `Bearer ${authToken}` } }
       );
 
