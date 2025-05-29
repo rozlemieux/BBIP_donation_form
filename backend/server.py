@@ -501,9 +501,64 @@ async def handle_bbms_oauth_callback(callback_data: BBMSOAuthCallback):
         
         organization = Organization(**org_data)
         
-        # Exchange code for tokens
+        # Get the stored app credentials
+        temp_app_id = org_data.get("temp_app_id")
+        temp_app_secret = org_data.get("temp_app_secret")
+        
+        if not temp_app_id or not temp_app_secret:
+            raise HTTPException(400, "Missing app credentials for OAuth flow")
+        
+        # Decrypt app secret
+        app_secret = decrypt_data(temp_app_secret)
+        
+        # Exchange code for tokens using user's app credentials
         redirect_uri = "https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com/auth/blackbaud/callback"
-        token_data = await bb_client.exchange_code_for_token(callback_data.code, redirect_uri)
+        
+        import base64
+        import httpx
+        
+        # Create basic auth header
+        auth_string = f"{temp_app_id}:{app_secret}"
+        auth_bytes = auth_string.encode('ascii')
+        auth_b64 = base64.b64encode(auth_bytes).decode('ascii')
+        
+        headers = {
+            "Authorization": f"Basic {auth_b64}",
+            "Content-Type": "application/x-www-form-urlencoded"
+        }
+        
+        data = {
+            "grant_type": "authorization_code",
+            "code": callback_data.code,
+            "redirect_uri": redirect_uri
+        }
+        
+        logging.info(f"Exchanging code for token with user's app credentials")
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{BB_OAUTH_URL}/token",
+                headers=headers,
+                data=data,
+                timeout=30.0
+            )
+            
+            if response.status_code != 200:
+                error_text = response.text
+                logging.error(f"Token exchange failed: {response.status_code} - {error_text}")
+                
+                try:
+                    error_data = response.json()
+                    if error_data.get("error") == "invalid_grant":
+                        raise HTTPException(400, "Authorization code expired or invalid. Please try the OAuth flow again.")
+                    elif error_data.get("error") == "invalid_client":
+                        raise HTTPException(400, "Invalid application credentials. Please check your Blackbaud App ID and Secret.")
+                    else:
+                        raise HTTPException(400, f"OAuth error: {error_data.get('error_description', 'Unknown error')}")
+                except:
+                    raise HTTPException(400, f"Failed to exchange code for token: {error_text}")
+            
+            token_data = response.json()
         
         # Test the token
         access_token = token_data.get("access_token")
@@ -531,8 +586,10 @@ async def handle_bbms_oauth_callback(callback_data: BBMSOAuthCallback):
         if encrypted_refresh_token:
             update_data["bb_refresh_token"] = encrypted_refresh_token
         
-        # Clear OAuth state
+        # Clear OAuth state and temp credentials
         update_data["oauth_state"] = None
+        update_data["temp_app_id"] = None
+        update_data["temp_app_secret"] = None
         
         await db.organizations.update_one(
             {"id": org_id},
