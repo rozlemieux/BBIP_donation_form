@@ -649,13 +649,76 @@ const BBMSConfig = ({ organization, authToken, onUpdate }) => {
         </form>
 
         <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
-          <h4 className="font-medium text-blue-800 mb-2">How to get your credentials:</h4>
-          <ol className="text-sm text-blue-700 list-decimal list-inside space-y-1">
-            <li>Log into your Blackbaud BBMS account</li>
-            <li>Navigate to Configuration → Payment Methods</li>
-            <li>Copy your Merchant Account ID</li>
-            <li>Generate an Access Token in the API section</li>
-          </ol>
+          <h4 className="font-medium text-blue-800 mb-2">📋 How to get your Blackbaud credentials:</h4>
+          
+          <div className="space-y-4 text-sm text-blue-700">
+            <div>
+              <p className="font-medium mb-2">Step 1: Create Blackbaud Developer Account</p>
+              <ol className="list-decimal list-inside space-y-1 ml-4">
+                <li>Go to <a href="https://developer.sky.blackbaud.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">developer.sky.blackbaud.com</a></li>
+                <li>Sign in with your Blackbaud account or create one</li>
+                <li>Complete the developer registration process</li>
+              </ol>
+            </div>
+            
+            <div>
+              <p className="font-medium mb-2">Step 2: Create Application</p>
+              <ol className="list-decimal list-inside space-y-1 ml-4">
+                <li>Click "My Applications" in the developer portal</li>
+                <li>Click "Create Application" or "Add Application"</li>
+                <li>Fill in application details (name, description, etc.)</li>
+                <li>Enable <strong>Payments API</strong> in the API access section</li>
+                <li>Set redirect URI to: <code className="bg-blue-100 px-1 rounded">https://localhost</code></li>
+                <li>Save your application</li>
+              </ol>
+            </div>
+            
+            <div>
+              <p className="font-medium mb-2">Step 3: Get Application Credentials</p>
+              <ol className="list-decimal list-inside space-y-1 ml-4">
+                <li>In your application settings, find your <strong>Application ID</strong></li>
+                <li>Note down your <strong>Application Secret</strong></li>
+                <li>These are your OAuth2 credentials</li>
+              </ol>
+            </div>
+            
+            <div>
+              <p className="font-medium mb-2">Step 4: Get Access Token (Manual Method)</p>
+              <ol className="list-decimal list-inside space-y-1 ml-4">
+                <li>Go to the "Authorization" section in your application</li>
+                <li>Click "Authorize Application" or use the OAuth2 flow</li>
+                <li>This will redirect you and provide an authorization code</li>
+                <li>Exchange the code for an access token using the OAuth2 token endpoint</li>
+              </ol>
+            </div>
+            
+            <div>
+              <p className="font-medium mb-2">Step 5: Get Merchant Account ID</p>
+              <ol className="list-decimal list-inside space-y-1 ml-4">
+                <li>Log into your Blackbaud BBMS merchant portal</li>
+                <li>Navigate to Account Settings or Configuration</li>
+                <li>Find your Merchant Account ID (usually starts with "BBMS")</li>
+              </ol>
+            </div>
+            
+            <div className="bg-yellow-50 border border-yellow-200 rounded p-3 mt-4">
+              <p className="font-medium text-yellow-800">⚠️ Note:</p>
+              <p className="text-yellow-700">
+                Getting an access token manually is complex. For a production application, 
+                we recommend implementing the full OAuth2 flow. Contact us if you need help 
+                with the OAuth2 integration.
+              </p>
+            </div>
+            
+            <div className="bg-green-50 border border-green-200 rounded p-3 mt-4">
+              <p className="font-medium text-green-800">💡 Alternative:</p>
+              <p className="text-green-700">
+                If you're having trouble with the manual token process, you can start in 
+                Test Mode with dummy credentials to explore the platform, then get proper 
+                credentials when you're ready to go live.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
