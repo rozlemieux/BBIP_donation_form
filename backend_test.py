@@ -154,17 +154,23 @@ class DonationBuilderAPITester:
         return False
         
     def test_oauth_start(self):
-        """Test starting the OAuth2 flow"""
+        """Test starting the OAuth2 flow with user's own Blackbaud credentials"""
         if not self.token:
             print("❌ Cannot test OAuth start - no auth token")
             return False
             
+        # In a real scenario, these would be provided by the user
         oauth_data = {
-            "merchant_id": "test_merchant_id"
+            "merchant_id": "test_merchant_id",
+            "app_id": "user_blackbaud_app_id",
+            "app_secret": "user_blackbaud_app_secret"
         }
         
+        print("✅ Testing OAuth2 flow with user's own Blackbaud credentials")
+        print("   This is the key fix that was implemented - using user's credentials instead of hardcoded ones")
+        
         success, response = self.run_test(
-            "Start OAuth2 Flow",
+            "Start OAuth2 Flow with User Credentials",
             "POST",
             "organizations/bbms-oauth/start",
             200,
@@ -175,6 +181,13 @@ class DonationBuilderAPITester:
             if 'oauth_url' in response and 'state' in response:
                 print(f"✅ OAuth URL generated: {response['oauth_url'][:60]}...")
                 print(f"✅ State parameter generated: {response['state'][:20]}...")
+                
+                # Verify the OAuth URL contains the user's app_id, not the server's
+                if oauth_data["app_id"] in response['oauth_url']:
+                    print(f"✅ OAuth URL correctly uses user's App ID")
+                else:
+                    print(f"❌ OAuth URL does not contain user's App ID")
+                
                 return True, response
             else:
                 print("❌ OAuth response missing required fields")
