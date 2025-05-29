@@ -213,6 +213,65 @@ class DonationBuilderAPITester:
             print(f"❌ Failed - Error: {str(e)}")
             return False
 
+    def test_toggle_test_mode(self):
+        """Test toggling test mode"""
+        # First, check current mode
+        success, response = self.run_test(
+            "Get Current Mode",
+            "GET",
+            "organizations/me",
+            200
+        )
+        
+        if not success:
+            return False
+            
+        current_mode = response.get('test_mode', True)
+        print(f"Current test mode: {current_mode}")
+        
+        # Toggle to the opposite mode
+        new_mode = not current_mode
+        success, response = self.run_test(
+            f"Toggle to {'Test' if new_mode else 'Production'} Mode",
+            "PUT",
+            "organizations/test-mode",
+            200,
+            data={"test_mode": new_mode}
+        )
+        
+        if not success:
+            return False
+            
+        # Verify the mode was changed
+        success, response = self.run_test(
+            "Verify Mode Change",
+            "GET",
+            "organizations/me",
+            200
+        )
+        
+        if success:
+            updated_mode = response.get('test_mode', True)
+            if updated_mode == new_mode:
+                print(f"✅ Mode successfully changed to {'Test' if new_mode else 'Production'}")
+                
+                # Toggle back to original mode
+                success, response = self.run_test(
+                    f"Toggle back to {'Test' if current_mode else 'Production'} Mode",
+                    "PUT",
+                    "organizations/test-mode",
+                    200,
+                    data={"test_mode": current_mode}
+                )
+                
+                if success:
+                    print(f"✅ Mode successfully changed back to {'Test' if current_mode else 'Production'}")
+                    return True
+            else:
+                print(f"❌ Mode change verification failed. Expected: {new_mode}, Got: {updated_mode}")
+        
+        return False
+        
     def run_all_tests(self):
         """Run all API tests"""
         print("🚀 Starting Donation Builder API Tests")
@@ -235,6 +294,9 @@ class DonationBuilderAPITester:
         
         # Test BBMS configuration (with dummy values)
         self.test_configure_bbms()
+        
+        # Test test/production mode toggle
+        self.test_toggle_test_mode()
         
         # Test donation form config
         self.test_get_donation_form_config()
