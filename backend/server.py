@@ -262,13 +262,30 @@ class BlackbaudClient:
                 "Content-Type": "application/json"
             }
             
+            # Try a simple API call that should work with payments scope
+            # Use a basic endpoint that's available in both sandbox and production
             async with httpx.AsyncClient() as client:
+                # Try the subscription endpoint first as it's more basic
                 response = await client.get(
-                    f"{base_url}/constituent/v1/constituents?limit=1",
+                    f"{base_url}/oauth/subscriptions",
                     headers=headers,
                     timeout=30.0
                 )
+                
+                if response.status_code == 200:
+                    logging.info("Token validation successful via subscriptions endpoint")
+                    return True
+                
+                # If that fails, try a different basic endpoint
+                response = await client.get(
+                    f"{base_url}/oauth/userinfo",
+                    headers=headers,
+                    timeout=30.0
+                )
+                
+                logging.info(f"Token validation response: {response.status_code}")
                 return response.status_code == 200
+                
         except Exception as e:
             logging.error(f"Error testing Blackbaud credentials: {e}")
             return False
