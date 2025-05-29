@@ -662,7 +662,209 @@ const BBMSConfig = ({ organization, authToken, onUpdate }) => {
   );
 };
 
-// Embed Code Component
+// Mode Settings Component
+const ModeSettings = ({ organization, authToken, onUpdate }) => {
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [pendingMode, setPendingMode] = useState(null);
+
+  const handleModeToggle = async (newTestMode) => {
+    // If switching to production, show confirmation
+    if (!newTestMode && organization?.test_mode) {
+      setPendingMode(newTestMode);
+      setShowConfirm(true);
+      return;
+    }
+    
+    // If switching to test mode, proceed directly
+    await updateMode(newTestMode);
+  };
+
+  const updateMode = async (testMode) => {
+    setLoading(true);
+
+    try {
+      await axios.put(`${API}/organizations/test-mode`, 
+        { test_mode: testMode }, 
+        { headers: { Authorization: `Bearer ${authToken}` } }
+      );
+      setSuccess(true);
+      onUpdate();
+      setShowConfirm(false);
+      setPendingMode(null);
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (error) {
+      console.error('Failed to update mode:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const confirmModeChange = () => {
+    updateMode(pendingMode);
+  };
+
+  const cancelModeChange = () => {
+    setShowConfirm(false);
+    setPendingMode(null);
+  };
+
+  return (
+    <div className="max-w-2xl">
+      <h2 className="text-2xl font-bold text-gray-800 mb-6">Mode Settings</h2>
+
+      <div className="bg-white rounded-lg shadow-sm border p-6">
+        <h3 className="text-lg font-medium text-gray-800 mb-4">Payment Processing Mode</h3>
+        
+        <div className="space-y-6">
+          {/* Current Mode Display */}
+          <div className={`border rounded-lg p-4 ${
+            organization?.test_mode 
+              ? 'bg-yellow-50 border-yellow-200' 
+              : 'bg-green-50 border-green-200'
+          }`}>
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className={`font-medium ${
+                  organization?.test_mode ? 'text-yellow-800' : 'text-green-800'
+                }`}>
+                  {organization?.test_mode ? '🧪 Test Mode' : '🚀 Production Mode'}
+                </h4>
+                <p className={`text-sm mt-1 ${
+                  organization?.test_mode ? 'text-yellow-700' : 'text-green-700'
+                }`}>
+                  {organization?.test_mode 
+                    ? 'Safe testing environment - no real payments processed'
+                    : 'Live environment - real payments will be processed'
+                  }
+                </p>
+              </div>
+              <div className={`text-2xl ${
+                organization?.test_mode ? 'text-yellow-600' : 'text-green-600'
+              }`}>
+                {organization?.test_mode ? '🧪' : '🚀'}
+              </div>
+            </div>
+          </div>
+
+          {/* Mode Options */}
+          <div className="space-y-4">
+            <h4 className="font-medium text-gray-800">Switch Mode:</h4>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Test Mode Option */}
+              <button
+                onClick={() => handleModeToggle(true)}
+                disabled={loading || organization?.test_mode}
+                className={`p-4 border rounded-lg text-left transition-all ${
+                  organization?.test_mode
+                    ? 'bg-yellow-50 border-yellow-200 cursor-default'
+                    : 'border-gray-200 hover:border-yellow-300 hover:bg-yellow-50'
+                } ${loading ? 'opacity-50' : ''}`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <h5 className="font-medium text-gray-800">🧪 Test Mode</h5>
+                  {organization?.test_mode && (
+                    <span className="text-yellow-600 text-sm font-medium">ACTIVE</span>
+                  )}
+                </div>
+                <p className="text-sm text-gray-600">
+                  Safe testing environment. No real payments will be processed.
+                </p>
+                <ul className="text-xs text-gray-500 mt-2 list-disc list-inside">
+                  <li>Sandbox API endpoints</li>
+                  <li>Test payment processing</li>
+                  <li>No actual charges</li>
+                </ul>
+              </button>
+
+              {/* Production Mode Option */}
+              <button
+                onClick={() => handleModeToggle(false)}
+                disabled={loading || !organization?.test_mode}
+                className={`p-4 border rounded-lg text-left transition-all ${
+                  !organization?.test_mode
+                    ? 'bg-green-50 border-green-200 cursor-default'
+                    : 'border-gray-200 hover:border-green-300 hover:bg-green-50'
+                } ${loading ? 'opacity-50' : ''}`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <h5 className="font-medium text-gray-800">🚀 Production Mode</h5>
+                  {!organization?.test_mode && (
+                    <span className="text-green-600 text-sm font-medium">ACTIVE</span>
+                  )}
+                </div>
+                <p className="text-sm text-gray-600">
+                  Live environment. Real payments will be processed.
+                </p>
+                <ul className="text-xs text-gray-500 mt-2 list-disc list-inside">
+                  <li>Production API endpoints</li>
+                  <li>Real payment processing</li>
+                  <li>Actual charges to donors</li>
+                </ul>
+              </button>
+            </div>
+          </div>
+
+          {success && (
+            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md">
+              Mode updated successfully!
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Important Notes */}
+      <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <h4 className="font-medium text-blue-800 mb-2">📋 Important Notes:</h4>
+        <ul className="text-sm text-blue-700 list-disc list-inside space-y-1">
+          <li>Organizations start in Test Mode by default for safety</li>
+          <li>You can switch between modes at any time</li>
+          <li>BBMS credentials must match the selected mode (test vs production)</li>
+          <li>Existing donation forms will use the current mode setting</li>
+          <li>Transaction history is maintained separately for each mode</li>
+        </ul>
+      </div>
+
+      {/* Confirmation Modal */}
+      {showConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md mx-4">
+            <h3 className="text-lg font-bold text-gray-800 mb-4">⚠️ Switch to Production Mode?</h3>
+            <p className="text-gray-600 mb-6">
+              You're about to switch to Production Mode. This means:
+            </p>
+            <ul className="text-sm text-gray-600 list-disc list-inside mb-6 space-y-1">
+              <li>Real payments will be processed</li>
+              <li>Donors will be charged actual money</li>
+              <li>You need valid production BBMS credentials</li>
+              <li>All transactions will be live</li>
+            </ul>
+            <p className="text-sm font-medium text-orange-700 mb-6">
+              Make sure you have tested thoroughly in Test Mode first!
+            </p>
+            <div className="flex space-x-3">
+              <button
+                onClick={confirmModeChange}
+                disabled={loading}
+                className="flex-1 bg-red-600 text-white font-medium py-2 px-4 rounded-md hover:bg-red-700 disabled:bg-gray-400"
+              >
+                {loading ? 'Switching...' : 'Yes, Switch to Production'}
+              </button>
+              <button
+                onClick={cancelModeChange}
+                className="flex-1 bg-gray-200 text-gray-800 font-medium py-2 px-4 rounded-md hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 const EmbedCode = ({ organization }) => {
   const [copied, setCopied] = useState(false);
 
