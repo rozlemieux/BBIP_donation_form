@@ -413,6 +413,108 @@ async def login_organization(login_data: AdminLogin):
         logging.error(f"Login error: {e}")
         raise HTTPException(500, f"Login failed: {str(e)}")
 
+@api_router.post("/organizations/bbms-oauth/start")
+async def start_bbms_oauth(
+    oauth_data: BBMSOAuthStart,
+    org_id: str = Depends(verify_token)
+):
+    """Start OAuth2 flow for BBMS credentials"""
+    try:
+        # Generate state parameter for security
+        import secrets
+        state = f"{org_id}:{secrets.token_urlsafe(32)}"
+        
+        # Store state in organization temporarily
+        await db.organizations.update_one(
+            {"id": org_id},
+            {
+                "$set": {
+                    "oauth_state": state,
+                    "bb_merchant_id": oauth_data.merchant_id,
+                    "updated_at": datetime.utcnow()
+                }
+            }
+        )
+        
+        # Generate OAuth URL
+        redirect_uri = "https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com/auth/blackbaud/callback"
+        oauth_url = await bb_client.generate_oauth_url(state, redirect_uri)
+        
+        return {
+            "oauth_url": oauth_url,
+            "state": state
+        }
+    except Exception as e:
+        logging.error(f"OAuth start error: {e}")
+        raise HTTPException(500, f"Failed to start OAuth flow: {str(e)}")
+
+@api_router.post("/organizations/bbms-oauth/callback")
+async def handle_bbms_oauth_callback(callback_data: BBMSOAuthCallback):
+    """Handle OAuth2 callback and exchange code for tokens"""
+    try:
+        # Verify state parameter
+        state_parts = callback_data.state.split(":", 1)
+        if len(state_parts) != 2:
+            raise HTTPException(400, "Invalid state parameter")
+        
+        org_id = state_parts[0]
+        
+        # Get organization and verify state
+        org_data = await db.organizations.find_one({"id": org_id})
+        if not org_data or org_data.get("oauth_state") != callback_data.state:
+            raise HTTPException(400, "Invalid or expired state parameter")
+        
+        organization = Organization(**org_data)
+        
+        # Exchange code for tokens
+        redirect_uri = "https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com/auth/blackbaud/callback"
+        token_data = await bb_client.exchange_code_for_token(callback_data.code, redirect_uri)
+        
+        # Test the token
+        access_token = token_data.get("access_token")
+        if not access_token:
+            raise HTTPException(400, "No access token received")
+        
+        is_valid = await bb_client.test_credentials(access_token, organization.test_mode)
+        if not is_valid:
+            mode_text = "test" if organization.test_mode else "production"
+            raise HTTPException(400, f"Invalid credentials for {mode_text} environment")
+        
+        # Encrypt and store tokens
+        encrypted_access_token = encrypt_data(access_token)
+        encrypted_refresh_token = None
+        if token_data.get("refresh_token"):
+            encrypted_refresh_token = encrypt_data(token_data["refresh_token"])
+        
+        # Update organization with tokens
+        update_data = {
+            "bb_access_token": encrypted_access_token,
+            "bb_merchant_id": callback_data.merchant_id,
+            "updated_at": datetime.utcnow()
+        }
+        
+        if encrypted_refresh_token:
+            update_data["bb_refresh_token"] = encrypted_refresh_token
+        
+        # Clear OAuth state
+        update_data["oauth_state"] = None
+        
+        await db.organizations.update_one(
+            {"id": org_id},
+            {"$set": update_data}
+        )
+        
+        return {
+            "message": "OAuth2 flow completed successfully",
+            "organization_id": org_id
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"OAuth callback error: {e}")
+        raise HTTPException(500, f"OAuth callback failed: {str(e)}")
+
 @api_router.post("/organizations/configure-bbms")
 async def configure_bbms(
     credentials: BBMSCredentials,
