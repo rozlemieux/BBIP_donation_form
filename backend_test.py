@@ -217,50 +217,76 @@ class BlackbaudOAuthTester:
         print(f"✅ OAuth URL contains correct redirect URI: {redirect_uri}")
         return True
 
-    def test_oauth_credentials_validation(self):
-        """Test the OAuth credentials validation endpoint"""
-        if not self.token:
-            print("❌ Authentication required before testing OAuth credentials")
+    def test_embed_route(self):
+        """Test if the embed route is accessible and returns the donation form"""
+        print("\n🔍 Testing embed route...")
+        
+        if not self.organization_id:
+            print("❌ Organization ID required for testing embed route")
             return False
             
-        print("\n🔍 Testing OAuth credentials validation...")
+        embed_url = f"{self.base_url}/api/embed/donate/{self.organization_id}"
         
-        # Test data for OAuth credentials
-        test_data = {
-            "merchant_id": "96563c2e-c97a-4db1-a0ed-1b2a8219f110",
-            "app_id": "2e2c42a7-a2f5-4fd3-a0bc-d4b3b36d8cea",
-            "app_secret": "3VuF4BNX72+dClCDheqMN7xPfsu29GKGxdaobEIbWXU="
-        }
+        try:
+            response = requests.get(embed_url)
+            if response.status_code == 200:
+                print(f"✅ Embed route is accessible - Status: {response.status_code}")
+                
+                # Check if the response contains expected HTML elements for a donation form
+                html_content = response.text.lower()
+                expected_elements = [
+                    "donation form",
+                    "donation amount",
+                    "donate now",
+                    "donation-form",
+                    "donor-name",
+                    "donor-email"
+                ]
+                
+                missing_elements = [elem for elem in expected_elements if elem not in html_content]
+                
+                if not missing_elements:
+                    print("✅ Embed page contains all expected donation form elements")
+                    return True
+                else:
+                    print(f"❌ Embed page missing expected elements: {', '.join(missing_elements)}")
+                    return False
+            else:
+                print(f"❌ Embed route is not accessible - Status: {response.status_code}")
+                return False
+        except Exception as e:
+            print(f"❌ Error accessing embed route: {str(e)}")
+            return False
+            
+    def test_donation_form_config(self):
+        """Test the donation form configuration endpoint"""
+        print("\n🔍 Testing donation form configuration...")
         
+        if not self.organization_id:
+            print("❌ Organization ID required for testing donation form config")
+            return False
+            
         success, response = self.run_test(
-            "Test OAuth Credentials",
-            "POST",
-            "organizations/test-oauth-credentials",
-            200,
-            data=test_data
+            "Get Donation Form Config",
+            "GET",
+            f"organizations/{self.organization_id}/donation-form",
+            200
         )
         
         if not success:
             return False
             
         # Check if we got the expected response fields
-        required_fields = ['oauth_url', 'app_id_used', 'redirect_uri']
+        required_fields = ['organization_name', 'preset_amounts', 'custom_amount_enabled', 'required_fields']
         missing_fields = [field for field in required_fields if field not in response]
         
         if missing_fields:
             print(f"❌ Response missing required fields: {', '.join(missing_fields)}")
             return False
             
-        # Verify redirect URI
-        redirect_uri = response.get('redirect_uri')
-        expected_redirect = f"{self.base_url}/api/blackbaud-callback"
-        
-        if redirect_uri != expected_redirect:
-            print(f"❌ Incorrect redirect URI. Expected: {expected_redirect}, Got: {redirect_uri}")
-            return False
-            
-        print(f"✅ OAuth credentials validation successful")
-        print(f"✅ Redirect URI: {redirect_uri}")
+        print(f"✅ Donation form configuration retrieved successfully")
+        print(f"✅ Organization name: {response.get('organization_name')}")
+        print(f"✅ Preset amounts: {response.get('preset_amounts')}")
         return True
 
 def main():
