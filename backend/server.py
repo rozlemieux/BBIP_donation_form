@@ -502,12 +502,12 @@ class BlackbaudClient:
             
             mode_text = "sandbox" if test_mode else "production"
             logging.info(f"Creating checkout in {mode_text} mode for ${donation.amount}")
-            logging.info(f"Request URL: {base_url}/payments/v1/checkouts")
+            logging.info(f"Request URL: {base_url}/payments/checkout/sessions")
             logging.info(f"Merchant ID: {merchant_id}")
             
             async with httpx.AsyncClient() as client:
                 response = await client.post(
-                    f"{base_url}/payments/v1/checkouts",
+                    f"{base_url}/payments/checkout/sessions",
                     headers=headers,
                     json=checkout_data,
                     timeout=30.0
