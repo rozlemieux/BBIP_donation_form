@@ -700,11 +700,11 @@ const BBMSConfig = ({ organization, authToken, onUpdate }) => {
                 </p>
                 <div className="bg-yellow-100 border border-yellow-300 rounded p-2 mb-2 flex items-center justify-between">
                   <code className="text-xs break-all font-mono flex-1 mr-2">
-                    https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com/api/auth/callback/blackbaud
+                    https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com/api/blackbaud-callback
                   </code>
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText('https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com/api/auth/callback/blackbaud');
+                      navigator.clipboard.writeText('https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com/api/blackbaud-callback');
                       alert('Redirect URI copied to clipboard!');
                     }}
                     className="text-yellow-700 hover:text-yellow-800 text-xs bg-yellow-200 px-2 py-1 rounded"
