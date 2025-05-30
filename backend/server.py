@@ -502,57 +502,36 @@ class BlackbaudClient:
             
             mode_text = "sandbox" if test_mode else "production"
             logging.info(f"Creating checkout in {mode_text} mode for ${donation.amount}")
+            logging.info(f"Request URL: {base_url}/payments/checkout/sessions")
+            logging.info(f"Merchant ID: {merchant_id}")
             
-            # Try different endpoint formats to handle potential API changes
-            endpoints = [
-                "/payments/checkout/sessions",  # Current implementation
-                "/payment/v1/checkout/sessions", # Alternative format based on search results
-                "/payment/checkout/sessions",    # Another possible format
-                "/payments/v1/checkout/sessions" # Original format that was changed
-            ]
-            
-            success = False
-            error_messages = []
-            
-            for endpoint in endpoints:
-                try:
-                    endpoint_url = f"{base_url}{endpoint}"
-                    logging.info(f"Trying endpoint URL: {endpoint_url}")
-                    logging.info(f"Merchant ID: {merchant_id}")
-                    
-                    async with httpx.AsyncClient() as client:
-                        response = await client.post(
-                            endpoint_url,
-                            headers=headers,
-                            json=checkout_data,
-                            timeout=30.0
-                        )
-                        
-                        logging.info(f"Blackbaud API Response for {endpoint}: {response.status_code}")
-                        
-                        if response.status_code == 201 or response.status_code == 200:
-                            success = True
-                            logging.info(f"Successful endpoint: {endpoint}")
-                            break
-                        else:
-                            error_text = response.text
-                            error_messages.append(f"Endpoint {endpoint}: {response.status_code} - {error_text}")
-                            logging.error(f"Checkout creation failed with {endpoint}: {response.status_code} - {error_text}")
-                except Exception as e:
-                    error_messages.append(f"Endpoint {endpoint}: Exception - {str(e)}")
-                    logging.error(f"Exception with endpoint {endpoint}: {str(e)}")
-            
-            if not success:
-                # If all endpoints failed, raise an exception with all error messages
-                error_summary = "\n".join(error_messages)
-                logging.error(f"All checkout endpoints failed:\n{error_summary}")
-                raise HTTPException(400, f"Failed to create checkout with any endpoint. Errors:\n{error_summary}")
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    f"{base_url}/payments/checkout/sessions",
+                    headers=headers,
+                    json=checkout_data,
+                    timeout=30.0
+                )
                 
-            # If we got here, we have a successful response
-            checkout_response = response.json()
-            logging.info(f"Checkout created successfully: {checkout_response.get('id')} in {mode_text} mode")
-            
-            return checkout_response
+                logging.info(f"Blackbaud API Response: {response.status_code}")
+                logging.info(f"Response body: {response.text}")
+                
+                if response.status_code == 201 or response.status_code == 200:
+                    checkout_response = response.json()
+                    logging.info(f"Checkout created successfully: {checkout_response.get('id')} in {mode_text} mode")
+                    return checkout_response
+                else:
+                    error_text = response.text
+                    logging.error(f"Checkout creation failed: {response.status_code} - {error_text}")
+                    
+                    # Try to parse error details
+                    try:
+                        error_details = response.json()
+                        error_message = error_details.get('message', error_text)
+                    except:
+                        error_message = error_text
+                    
+                    raise HTTPException(400, f"Blackbaud error: {error_message}")
                 
         except Exception as e:
             logging.error(f"Error creating payment checkout: {e}")
