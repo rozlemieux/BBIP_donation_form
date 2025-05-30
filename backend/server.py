@@ -434,7 +434,8 @@ class BlackbaudClient:
     async def test_credentials(self, access_token: str, test_mode: bool = True) -> bool:
         """Test if the provided access token is valid"""
         try:
-            base_url = "https://api.sandbox.sky.blackbaud.com" if test_mode else "https://api.sky.blackbaud.com"
+            # Use the correct API base URL - 2025 update: same base URL for all environments
+            base_url = "https://api.sky.blackbaud.com"
             headers = {
                 "Bb-Api-Subscription-Key": self.standard_subscription_key,
                 "Authorization": f"Bearer {access_token}",
