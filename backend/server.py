@@ -472,8 +472,8 @@ class BlackbaudClient:
     async def create_payment_checkout(self, donation: DonationRequest, merchant_id: str, access_token: str, test_mode: bool = True) -> Dict:
         """Create a payment checkout session"""
         try:
-            # Use the correct API base URL - sandbox uses same base URL
-            base_url = "https://api.sky.blackbaud.com"
+            # Use the correct API base URL - sandbox has different subdomain
+            base_url = "https://api.sandbox.sky.blackbaud.com" if test_mode else "https://api.sky.blackbaud.com"
             headers = {
                 "Bb-Api-Subscription-Key": self.payment_subscription_key,
                 "Authorization": f"Bearer {access_token}",
