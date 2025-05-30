@@ -414,11 +414,11 @@ class BlackbaudOAuthTester:
             }
         }
         
-        print("🔍 Testing with 2025 API structure (https://api.sky.blackbaud.com)...")
+        print("🔍 Testing with 2025 API structure...")
         print(f"🔍 Using merchant ID: {self.merchant_id}")
         print(f"🔍 Using subscription key: e08faf45a0e643e6bfe042a8e4488afb")
         
-        # First, let's test the payment configurations endpoint directly
+        # First, let's test the payment configurations endpoint directly for both URLs
         try:
             print("\n🔍 Testing payment configurations endpoint directly...")
             headers = {
@@ -426,27 +426,51 @@ class BlackbaudOAuthTester:
                 "Content-Type": "application/json"
             }
             
-            configs_url = "https://api.sky.blackbaud.com/payments/configurations"
-            print(f"Making request to: {configs_url}")
+            # Try production URL first
+            configs_url_prod = "https://api.sky.blackbaud.com/payments/configurations"
+            print(f"Making request to production URL: {configs_url_prod}")
             
-            configs_response = requests.get(
-                configs_url,
+            configs_response_prod = requests.get(
+                configs_url_prod,
                 headers=headers,
                 timeout=30.0
             )
             
-            print(f"Configurations endpoint response: {configs_response.status_code}")
-            if configs_response.status_code == 200:
-                print("✅ Payment configurations endpoint is accessible!")
-                print(f"Response: {configs_response.text[:200]}...")  # Show first 200 chars
+            print(f"Production configurations endpoint response: {configs_response_prod.status_code}")
+            if configs_response_prod.status_code == 200:
+                print("✅ Production payment configurations endpoint is accessible!")
+                print(f"Response: {configs_response_prod.text[:200]}...")  # Show first 200 chars
                 
                 # Check if the merchant ID is in the response
-                if self.merchant_id in configs_response.text:
+                if self.merchant_id in configs_response_prod.text:
                     print(f"✅ Merchant ID {self.merchant_id} found in configurations response!")
                 else:
                     print(f"⚠️ Merchant ID {self.merchant_id} not found in configurations response")
             else:
-                print(f"❌ Failed to access payment configurations: {configs_response.text}")
+                print(f"❌ Failed to access production payment configurations: {configs_response_prod.text}")
+                
+                # Try sandbox URL as fallback
+                configs_url_sandbox = "https://api.sandbox.sky.blackbaud.com/payments/configurations"
+                print(f"Making request to sandbox URL: {configs_url_sandbox}")
+                
+                configs_response_sandbox = requests.get(
+                    configs_url_sandbox,
+                    headers=headers,
+                    timeout=30.0
+                )
+                
+                print(f"Sandbox configurations endpoint response: {configs_response_sandbox.status_code}")
+                if configs_response_sandbox.status_code == 200:
+                    print("✅ Sandbox payment configurations endpoint is accessible!")
+                    print(f"Response: {configs_response_sandbox.text[:200]}...")  # Show first 200 chars
+                    
+                    # Check if the merchant ID is in the response
+                    if self.merchant_id in configs_response_sandbox.text:
+                        print(f"✅ Merchant ID {self.merchant_id} found in configurations response!")
+                    else:
+                        print(f"⚠️ Merchant ID {self.merchant_id} not found in configurations response")
+                else:
+                    print(f"❌ Failed to access sandbox payment configurations: {configs_response_sandbox.text}")
         except Exception as e:
             print(f"❌ Error testing configurations endpoint: {e}")
         
