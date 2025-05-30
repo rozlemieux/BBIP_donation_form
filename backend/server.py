@@ -30,7 +30,7 @@ app = FastAPI(title="Donation Page Builder API")
 api_router = APIRouter(prefix="/api")
 
 # OAuth callback route - Move to API prefix to ensure it reaches backend
-@api_router.get("/auth/callback/blackbaud")
+@api_router.get("/blackbaud-callback")
 async def oauth_callback_page(code: str = None, state: str = None, error: str = None):
     """OAuth callback page that handles the redirect and posts back to API"""
     return HTMLResponse(f"""
