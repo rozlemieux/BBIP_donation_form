@@ -548,27 +548,11 @@ class BlackbaudClient:
                 logging.error(f"All checkout endpoints failed:\n{error_summary}")
                 raise HTTPException(400, f"Failed to create checkout with any endpoint. Errors:\n{error_summary}")
                 
-                logging.info(f"Blackbaud API Response: {response.status_code}")
-                
-                if response.status_code != 201:
-                    error_text = response.text
-                    logging.error(f"Checkout creation failed: {response.status_code} - {error_text}")
-                    
-                    # Try to parse the error response
-                    try:
-                        error_data = response.json()
-                        error_message = error_data.get('message', 'Unknown error')
-                        if 'not found' in error_message.lower():
-                            raise HTTPException(400, f"Blackbaud API endpoint not found. Please check the payment subscription key and API access.")
-                        else:
-                            raise HTTPException(400, f"Blackbaud error: {error_message}")
-                    except:
-                        raise HTTPException(400, f"Failed to create checkout: {error_text}")
-                
-                checkout_response = response.json()
-                logging.info(f"Checkout created successfully: {checkout_response.get('id')} in {mode_text} mode")
-                
-                return checkout_response
+            # If we got here, we have a successful response
+            checkout_response = response.json()
+            logging.info(f"Checkout created successfully: {checkout_response.get('id')} in {mode_text} mode")
+            
+            return checkout_response
                 
         except Exception as e:
             logging.error(f"Error creating payment checkout: {e}")
