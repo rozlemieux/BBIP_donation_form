@@ -25,10 +25,11 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-# Create the main app
+# Create the main app and API router
 app = FastAPI(title="Donation Page Builder API")
+api_router = APIRouter(prefix="/api")
 
-# OAuth callback route - MUST be registered FIRST to prevent frontend interception
+# OAuth callback route - Move to API prefix to ensure it reaches backend
 @app.get("/auth/blackbaud/callback")
 async def oauth_callback_page(code: str = None, state: str = None, error: str = None):
     """OAuth callback page that handles the redirect and posts back to API"""
