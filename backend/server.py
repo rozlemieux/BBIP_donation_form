@@ -840,7 +840,7 @@ async def test_oauth_credentials(
     try:
         # Test if we can generate a proper OAuth URL with user's credentials
         from urllib.parse import urlencode
-        redirect_uri = "https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com/auth/blackbaud/callback"
+        redirect_uri = "https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com/auth/callback/blackbaud"
         
         params = {
             "client_id": test_data.app_id,
