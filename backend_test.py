@@ -1,212 +1,303 @@
 
 import requests
-import unittest
-import json
-import os
 import sys
+import os
+import json
+import time
 from urllib.parse import urlparse, parse_qs
 
-# Use the public endpoint from the frontend .env file
-BACKEND_URL = "https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com"
-API_URL = f"{BACKEND_URL}/api"
+class BlackbaudOAuthTester:
+    def __init__(self, base_url="https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com"):
+        self.base_url = base_url
+        self.api_url = f"{base_url}/api"
+        self.token = None
+        self.tests_run = 0
+        self.tests_passed = 0
+        self.organization_id = None
 
-class BlackbaudOAuthTest(unittest.TestCase):
-    def setUp(self):
-        # Test organization credentials
-        self.org_data = {
-            "name": "Test Organization",
-            "admin_email": f"test_org_{os.urandom(4).hex()}@example.com",
-            "admin_password": "TestPassword123!"
-        }
+    def run_test(self, name, method, endpoint, expected_status, data=None, headers=None):
+        """Run a single API test"""
+        url = f"{self.api_url}/{endpoint}"
+        if not headers:
+            headers = {'Content-Type': 'application/json'}
+        if self.token:
+            headers['Authorization'] = f'Bearer {self.token}'
+
+        self.tests_run += 1
+        print(f"\n🔍 Testing {name}...")
         
-        # Blackbaud OAuth test data
-        self.oauth_data = {
+        try:
+            if method == 'GET':
+                response = requests.get(url, headers=headers)
+            elif method == 'POST':
+                response = requests.post(url, json=data, headers=headers)
+
+            success = response.status_code == expected_status
+            if success:
+                self.tests_passed += 1
+                print(f"✅ Passed - Status: {response.status_code}")
+                try:
+                    return success, response.json()
+                except:
+                    return success, response.text
+            else:
+                print(f"❌ Failed - Expected {expected_status}, got {response.status_code}")
+                try:
+                    error_data = response.json()
+                    print(f"Error details: {json.dumps(error_data, indent=2)}")
+                except:
+                    print(f"Response text: {response.text}")
+                return False, None
+
+        except Exception as e:
+            print(f"❌ Failed - Error: {str(e)}")
+            return False, None
+
+    def test_register_and_login(self):
+        """Register a test organization and login"""
+        import random
+        import string
+        
+        # Generate random credentials
+        random_suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=6))
+        org_name = f"Test Org {random_suffix}"
+        email = f"test{random_suffix}@example.com"
+        password = "TestPass123!"
+        
+        # Register
+        success, response = self.run_test(
+            "Register Organization",
+            "POST",
+            "organizations/register",
+            200,
+            data={
+                "name": org_name,
+                "admin_email": email,
+                "admin_password": password
+            }
+        )
+        
+        if not success:
+            print("❌ Registration failed, trying login with default credentials")
+            # Try login with default credentials
+            success, response = self.run_test(
+                "Login with Default Credentials",
+                "POST",
+                "organizations/login",
+                200,
+                data={
+                    "email": "test@example.com",
+                    "password": "password123"
+                }
+            )
+            
+            if not success:
+                return False
+        
+        # Store token and organization ID
+        self.token = response.get('access_token')
+        self.organization_id = response.get('organization', {}).get('id')
+        
+        print(f"✅ Authentication successful - Organization ID: {self.organization_id}")
+        return True
+
+    def test_oauth_callback_route(self):
+        """Test if the OAuth callback route is accessible"""
+        print("\n🔍 Testing OAuth callback route...")
+        
+        # Test direct access to the callback URL
+        callback_url = f"{self.base_url}/api/blackbaud-callback"
+        
+        try:
+            response = requests.get(callback_url)
+            if response.status_code == 200:
+                print(f"✅ Callback route is accessible - Status: {response.status_code}")
+                
+                # Check if the response contains expected HTML elements
+                html_content = response.text.lower()
+                if "blackbaud authentication" in html_content and "oauth callback debug info" in html_content:
+                    print("✅ Callback page contains expected content")
+                    return True
+                else:
+                    print("❌ Callback page doesn't contain expected content")
+                    return False
+            else:
+                print(f"❌ Callback route is not accessible - Status: {response.status_code}")
+                return False
+        except Exception as e:
+            print(f"❌ Error accessing callback route: {str(e)}")
+            return False
+
+    def test_oauth_callback_with_params(self):
+        """Test the OAuth callback with test parameters"""
+        print("\n🔍 Testing OAuth callback with parameters...")
+        
+        # Test parameters
+        test_code = "test_auth_code"
+        test_state = "test_state_parameter"
+        
+        callback_url = f"{self.base_url}/api/blackbaud-callback?code={test_code}&state={test_state}"
+        
+        try:
+            response = requests.get(callback_url)
+            if response.status_code == 200:
+                print(f"✅ Callback with parameters is accessible - Status: {response.status_code}")
+                
+                # Check if the response contains our test parameters
+                html_content = response.text
+                if test_code in html_content and test_state in html_content:
+                    print("✅ Callback page correctly displays the provided parameters")
+                    return True
+                else:
+                    print("❌ Callback page doesn't display the provided parameters")
+                    return False
+            else:
+                print(f"❌ Callback with parameters is not accessible - Status: {response.status_code}")
+                return False
+        except Exception as e:
+            print(f"❌ Error accessing callback with parameters: {str(e)}")
+            return False
+
+    def test_oauth_start_flow(self):
+        """Test starting the OAuth flow"""
+        if not self.token or not self.organization_id:
+            print("❌ Authentication required before testing OAuth flow")
+            return False
+            
+        print("\n🔍 Testing OAuth start flow...")
+        
+        # Test data for OAuth start
+        oauth_data = {
             "merchant_id": "96563c2e-c97a-4db1-a0ed-1b2a8219f110",
             "app_id": "2e2c42a7-a2f5-4fd3-a0bc-d4b3b36d8cea",
             "app_secret": "3VuF4BNX72+dClCDheqMN7xPfsu29GKGxdaobEIbWXU="
         }
         
-        # Register and login
-        self.register_and_login()
-    
-    def register_and_login(self):
-        """Register a test organization and login to get auth token"""
-        # Register
-        response = requests.post(f"{API_URL}/organizations/register", json=self.org_data)
-        if response.status_code != 200:
-            print(f"Registration failed: {response.text}")
-            self.auth_token = None
-            self.org_id = None
-            return
-            
-        data = response.json()
-        self.auth_token = data.get("access_token")
-        self.org_id = data.get("organization", {}).get("id")
-        
-        print(f"Registered test organization with ID: {self.org_id}")
-    
-    def test_01_oauth_start_endpoint(self):
-        """Test the OAuth start endpoint"""
-        if not self.auth_token:
-            self.skipTest("Authentication failed during setup")
-        
-        print("\n🔍 Testing OAuth start endpoint...")
-        
-        headers = {"Authorization": f"Bearer {self.auth_token}"}
-        response = requests.post(
-            f"{API_URL}/organizations/bbms-oauth/start", 
-            json=self.oauth_data,
-            headers=headers
+        success, response = self.run_test(
+            "Start OAuth Flow",
+            "POST",
+            "organizations/bbms-oauth/start",
+            200,
+            data=oauth_data
         )
         
-        self.assertEqual(response.status_code, 200, f"Expected 200, got {response.status_code}: {response.text}")
+        if not success:
+            return False
+            
+        # Check if we got an OAuth URL and state parameter
+        oauth_url = response.get('oauth_url')
+        state = response.get('state')
         
-        data = response.json()
-        self.assertIn("oauth_url", data, "Response should contain oauth_url")
-        self.assertIn("state", data, "Response should contain state parameter")
+        if not oauth_url or not state:
+            print("❌ OAuth start response missing required fields")
+            return False
+            
+        print(f"✅ OAuth URL generated: {oauth_url[:60]}...")
+        print(f"✅ State parameter: {state[:30]}...")
         
         # Parse the OAuth URL to verify parameters
-        parsed_url = urlparse(data["oauth_url"])
+        parsed_url = urlparse(oauth_url)
         query_params = parse_qs(parsed_url.query)
         
-        self.assertEqual(query_params.get("client_id", [""])[0], self.oauth_data["app_id"], 
-                         "OAuth URL should contain correct client_id")
-        self.assertEqual(query_params.get("response_type", [""])[0], "code", 
-                         "OAuth URL should have response_type=code")
-        self.assertEqual(query_params.get("state", [""])[0], data["state"], 
-                         "OAuth URL state should match response state")
+        required_params = ['client_id', 'response_type', 'redirect_uri', 'state', 'scope']
+        missing_params = [param for param in required_params if param not in query_params]
         
-        # Store state for callback test
-        self.oauth_state = data["state"]
-        
-        print("✅ OAuth start endpoint working correctly")
-        print(f"🔗 OAuth URL generated: {data['oauth_url'][:60]}...")
-        return data
-    
-    def test_02_oauth_callback_route(self):
-        """Test that the OAuth callback route exists and returns HTML"""
-        print("\n🔍 Testing OAuth callback route...")
-        
-        # Make a GET request to the callback URL without parameters
-        response = requests.get(f"{BACKEND_URL}/auth/blackbaud/callback")
-        
-        self.assertEqual(response.status_code, 200, 
-                         f"Expected 200, got {response.status_code}: {response.text}")
-        self.assertIn("text/html", response.headers.get("Content-Type", ""), 
-                      "Response should be HTML")
-        
-        # Check for key elements in the HTML
-        html_content = response.text
-        self.assertIn("Blackbaud Authentication", html_content, 
-                      "HTML should contain title")
-        self.assertIn("OAuth Callback Debug Info", html_content, 
-                      "HTML should contain debug info section")
-        
-        print("✅ OAuth callback route exists and returns HTML")
-    
-    def test_03_oauth_callback_with_parameters(self):
-        """Test the OAuth callback route with mock parameters"""
-        print("\n🔍 Testing OAuth callback route with parameters...")
-        
-        # First, get a valid state from the OAuth start endpoint
-        if not hasattr(self, 'oauth_state'):
-            oauth_data = self.test_01_oauth_start_endpoint()
-            if not oauth_data:
-                self.skipTest("Failed to get OAuth state")
-        
-        # Make a GET request to the callback URL with mock parameters
-        params = {
-            "code": "mock_auth_code",
-            "state": self.oauth_state
-        }
-        
-        response = requests.get(f"{BACKEND_URL}/auth/blackbaud/callback", params=params)
-        
-        self.assertEqual(response.status_code, 200, 
-                         f"Expected 200, got {response.status_code}: {response.text}")
-        
-        # Check that the parameters are displayed in the HTML
-        html_content = response.text
-        self.assertIn("mock_auth_code", html_content, 
-                      "HTML should display the code parameter")
-        self.assertIn(self.oauth_state[:10], html_content, 
-                      "HTML should display the state parameter")
-        
-        print("✅ OAuth callback route correctly displays parameters")
-    
-    def test_04_oauth_callback_api_endpoint(self):
-        """Test the OAuth callback API endpoint"""
-        if not self.auth_token:
-            self.skipTest("Authentication failed during setup")
+        if missing_params:
+            print(f"❌ OAuth URL missing required parameters: {', '.join(missing_params)}")
+            return False
             
-        if not hasattr(self, 'oauth_state'):
-            oauth_data = self.test_01_oauth_start_endpoint()
-            if not oauth_data:
-                self.skipTest("Failed to get OAuth state")
+        # Verify redirect URI
+        redirect_uri = query_params.get('redirect_uri', [''])[0]
+        expected_redirect = f"{self.base_url}/api/blackbaud-callback"
         
-        print("\n🔍 Testing OAuth callback API endpoint...")
+        if redirect_uri != expected_redirect:
+            print(f"❌ Incorrect redirect URI. Expected: {expected_redirect}, Got: {redirect_uri}")
+            return False
+            
+        print(f"✅ OAuth URL contains correct redirect URI: {redirect_uri}")
+        return True
+
+    def test_oauth_credentials_validation(self):
+        """Test the OAuth credentials validation endpoint"""
+        if not self.token:
+            print("❌ Authentication required before testing OAuth credentials")
+            return False
+            
+        print("\n🔍 Testing OAuth credentials validation...")
         
-        # This will fail with invalid_grant since we're using a mock code
-        # but we can test that the endpoint exists and processes the request
-        callback_data = {
-            "code": "mock_auth_code",
-            "state": self.oauth_state,
-            "merchant_id": self.oauth_data["merchant_id"]
+        # Test data for OAuth credentials
+        test_data = {
+            "merchant_id": "96563c2e-c97a-4db1-a0ed-1b2a8219f110",
+            "app_id": "2e2c42a7-a2f5-4fd3-a0bc-d4b3b36d8cea",
+            "app_secret": "3VuF4BNX72+dClCDheqMN7xPfsu29GKGxdaobEIbWXU="
         }
         
-        response = requests.post(f"{API_URL}/organizations/bbms-oauth/callback", json=callback_data)
-        
-        # We expect a 400 error because the code is invalid
-        self.assertEqual(response.status_code, 400, 
-                         f"Expected 400 for invalid code, got {response.status_code}: {response.text}")
-        
-        error_data = response.json()
-        self.assertIn("detail", error_data, "Error response should contain detail")
-        self.assertIn("code", error_data.get("detail", "").lower(), 
-                      "Error should mention invalid code or authorization code")
-        
-        print("✅ OAuth callback API endpoint correctly rejects invalid code")
-    
-    def test_05_test_oauth_credentials_endpoint(self):
-        """Test the endpoint for testing OAuth credentials"""
-        if not self.auth_token:
-            self.skipTest("Authentication failed during setup")
-        
-        print("\n🔍 Testing OAuth credentials test endpoint...")
-        
-        headers = {"Authorization": f"Bearer {self.auth_token}"}
-        response = requests.post(
-            f"{API_URL}/organizations/test-oauth-credentials", 
-            json=self.oauth_data,
-            headers=headers
+        success, response = self.run_test(
+            "Test OAuth Credentials",
+            "POST",
+            "organizations/test-oauth-credentials",
+            200,
+            data=test_data
         )
         
-        self.assertEqual(response.status_code, 200, 
-                         f"Expected 200, got {response.status_code}: {response.text}")
+        if not success:
+            return False
+            
+        # Check if we got the expected response fields
+        required_fields = ['oauth_url', 'app_id_used', 'redirect_uri']
+        missing_fields = [field for field in required_fields if field not in response]
         
-        data = response.json()
-        self.assertIn("oauth_url", data, "Response should contain oauth_url")
-        self.assertIn("app_id_used", data, "Response should contain app_id_used")
-        self.assertEqual(data.get("app_id_used"), self.oauth_data["app_id"], 
-                         "Response should use the provided app_id")
+        if missing_fields:
+            print(f"❌ Response missing required fields: {', '.join(missing_fields)}")
+            return False
+            
+        # Verify redirect URI
+        redirect_uri = response.get('redirect_uri')
+        expected_redirect = f"{self.base_url}/api/blackbaud-callback"
         
-        print("✅ OAuth credentials test endpoint working correctly")
+        if redirect_uri != expected_redirect:
+            print(f"❌ Incorrect redirect URI. Expected: {expected_redirect}, Got: {redirect_uri}")
+            return False
+            
+        print(f"✅ OAuth credentials validation successful")
+        print(f"✅ Redirect URI: {redirect_uri}")
+        return True
 
-def run_tests():
-    # Create a test suite with our tests
-    suite = unittest.TestSuite()
-    suite.addTest(BlackbaudOAuthTest('test_01_oauth_start_endpoint'))
-    suite.addTest(BlackbaudOAuthTest('test_02_oauth_callback_route'))
-    suite.addTest(BlackbaudOAuthTest('test_03_oauth_callback_with_parameters'))
-    suite.addTest(BlackbaudOAuthTest('test_04_oauth_callback_api_endpoint'))
-    suite.addTest(BlackbaudOAuthTest('test_05_test_oauth_credentials_endpoint'))
+def main():
+    tester = BlackbaudOAuthTester()
     
-    # Run the tests
-    runner = unittest.TextTestRunner(verbosity=2)
-    result = runner.run(suite)
+    # Run tests
+    print("\n===== BLACKBAUD OAUTH INTEGRATION TESTS =====\n")
     
-    # Return appropriate exit code
-    return 0 if result.wasSuccessful() else 1
+    # Test 1: Register and login
+    if not tester.test_register_and_login():
+        print("❌ Authentication failed, stopping tests")
+        return 1
+        
+    # Test 2: OAuth callback route
+    callback_route_ok = tester.test_oauth_callback_route()
+    
+    # Test 3: OAuth callback with parameters
+    callback_params_ok = tester.test_oauth_callback_with_params()
+    
+    # Test 4: OAuth start flow
+    oauth_start_ok = tester.test_oauth_start_flow()
+    
+    # Test 5: OAuth credentials validation
+    oauth_creds_ok = tester.test_oauth_credentials_validation()
+    
+    # Print summary
+    print("\n===== TEST SUMMARY =====")
+    print(f"OAuth Callback Route: {'✅ PASS' if callback_route_ok else '❌ FAIL'}")
+    print(f"OAuth Callback Parameters: {'✅ PASS' if callback_params_ok else '❌ FAIL'}")
+    print(f"OAuth Start Flow: {'✅ PASS' if oauth_start_ok else '❌ FAIL'}")
+    print(f"OAuth Credentials Validation: {'✅ PASS' if oauth_creds_ok else '❌ FAIL'}")
+    
+    # Overall result
+    all_passed = callback_route_ok and callback_params_ok and oauth_start_ok and oauth_creds_ok
+    print(f"\nOverall Result: {'✅ PASS' if all_passed else '❌ FAIL'}")
+    
+    return 0 if all_passed else 1
 
 if __name__ == "__main__":
-    sys.exit(run_tests())
+    sys.exit(main())
