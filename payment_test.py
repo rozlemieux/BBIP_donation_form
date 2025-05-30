@@ -120,7 +120,7 @@ class BlackbaudPaymentTester:
             
         # Create a test donation
         donation_data = {
-            "organization_id": self.organization_id,
+            "org_id": self.organization_id,
             "amount": 25.00,
             "donor_name": "Test Donor",
             "donor_email": "donor@example.com",
