@@ -523,8 +523,8 @@ class BlackbaudOAuthTester:
         return True
         
     def test_blackbaud_api_url_configuration(self):
-        """Test that the Blackbaud API URL is correctly configured for sandbox mode"""
-        print("\n🔍 Testing Blackbaud API URL configuration...")
+        """Test that the Blackbaud API URL is correctly configured for the 2025 API structure"""
+        print("\n🔍 Testing Blackbaud API URL configuration for 2025 API structure...")
         
         # Make a request to check the create_payment_checkout method
         if not self.token or not self.organization_id:
@@ -558,10 +558,7 @@ class BlackbaudOAuthTester:
             if response.status_code == 200:
                 print("✅ Donation checkout request succeeded, which suggests the API URL is correct")
                 checkout_url = response.json().get('checkout_url', '')
-                if 'sandbox' in checkout_url:
-                    print(f"✅ Checkout URL confirms sandbox environment: {checkout_url}")
-                else:
-                    print(f"⚠️ Checkout URL does not contain 'sandbox': {checkout_url}")
+                print(f"✅ Checkout URL: {checkout_url}")
                 return True
             else:
                 print(f"❌ Donation checkout request failed - Status: {response.status_code}")
