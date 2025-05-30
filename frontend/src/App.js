@@ -700,11 +700,11 @@ const BBMSConfig = ({ organization, authToken, onUpdate }) => {
                 </p>
                 <div className="bg-yellow-100 border border-yellow-300 rounded p-2 mb-2 flex items-center justify-between">
                   <code className="text-xs break-all font-mono flex-1 mr-2">
-                    https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com/api/blackbaud-callback
+                    https://8b2b653e-9dbe-4e45-9ea1-8a28a59c538d.preview.emergentagent.com/api/blackbaud-callback
                   </code>
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText('https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com/api/blackbaud-callback');
+                      navigator.clipboard.writeText('https://8b2b653e-9dbe-4e45-9ea1-8a28a59c538d.preview.emergentagent.com/api/blackbaud-callback');
                       alert('Redirect URI copied to clipboard!');
                     }}
                     className="text-yellow-700 hover:text-yellow-800 text-xs bg-yellow-200 px-2 py-1 rounded"
@@ -882,7 +882,7 @@ const BBMSConfig = ({ organization, authToken, onUpdate }) => {
                 <li className="bg-red-50 border border-red-200 p-2 rounded">
                   <strong>⚠️ CRITICAL:</strong> Set redirect URI to exactly: <br/>
                   <code className="bg-red-100 px-2 py-1 rounded text-xs break-all">
-                    https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com/api/blackbaud-callback
+                    https://8b2b653e-9dbe-4e45-9ea1-8a28a59c538d.preview.emergentagent.com/api/blackbaud-callback
                   </code>
                   <br/><span className="text-red-700 text-xs">This must match exactly (including https and the path)</span>
                 </li>

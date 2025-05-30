@@ -481,8 +481,8 @@ class BlackbaudClient:
             }
             
             # Use test URLs for return/cancel URLs
-            return_url = f"https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com/success"
-            cancel_url = f"https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com/cancel"
+            return_url = f"https://8b2b653e-9dbe-4e45-9ea1-8a28a59c538d.preview.emergentagent.com/success"
+            cancel_url = f"https://8b2b653e-9dbe-4e45-9ea1-8a28a59c538d.preview.emergentagent.com/cancel"
             
             checkout_data = {
                 "merchant_account_id": merchant_id,
@@ -674,7 +674,7 @@ async def start_bbms_oauth(
         
         # Generate OAuth URL using user's app credentials
         from urllib.parse import urlencode
-        redirect_uri = "https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com/api/blackbaud-callback"
+        redirect_uri = "https://8b2b653e-9dbe-4e45-9ea1-8a28a59c538d.preview.emergentagent.com/api/blackbaud-callback"
         
         params = {
             "client_id": oauth_data.app_id,
@@ -735,7 +735,7 @@ async def handle_bbms_oauth_callback(callback_data: BBMSOAuthCallback):
         logging.info(f"Using app ID: {temp_app_id[:8]}... for token exchange")
         
         # Exchange code for tokens using user's app credentials
-        redirect_uri = "https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com/api/blackbaud-callback"
+        redirect_uri = "https://8b2b653e-9dbe-4e45-9ea1-8a28a59c538d.preview.emergentagent.com/api/blackbaud-callback"
         
         import base64
         import httpx
@@ -862,7 +862,7 @@ async def test_oauth_credentials(
     try:
         # Test if we can generate a proper OAuth URL with user's credentials
         from urllib.parse import urlencode
-        redirect_uri = "https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com/api/blackbaud-callback"
+        redirect_uri = "https://8b2b653e-9dbe-4e45-9ea1-8a28a59c538d.preview.emergentagent.com/api/blackbaud-callback"
         
         params = {
             "client_id": test_data.app_id,
@@ -1121,7 +1121,7 @@ async def serve_donation_embed(org_id: str):
         <div id="donation-root" class="max-w-md mx-auto"></div>
         <script>
             const ORG_ID = '{org_id}';
-            const API_BASE = 'https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com/api';
+            const API_BASE = 'https://8b2b653e-9dbe-4e45-9ea1-8a28a59c538d.preview.emergentagent.com/api';
             
             // Simple donation form implementation
             window.addEventListener('DOMContentLoaded', function() {{

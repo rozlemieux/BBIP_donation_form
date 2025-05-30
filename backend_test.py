@@ -7,7 +7,7 @@ import time
 from urllib.parse import urlparse, parse_qs
 
 class BlackbaudOAuthTester:
-    def __init__(self, base_url="https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com"):
+    def __init__(self, base_url="https://8b2b653e-9dbe-4e45-9ea1-8a28a59c538d.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.token = None
