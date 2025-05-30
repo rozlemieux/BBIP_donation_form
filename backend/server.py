@@ -23,7 +23,9 @@ load_dotenv(ROOT_DIR / '.env')
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+# Extract database name from MONGO_URL or use default
+db_name = os.environ.get('DB_NAME', 'donation_builder')
+db = client[db_name]
 
 # Create the main app and API router
 app = FastAPI(title="Donation Page Builder API")
