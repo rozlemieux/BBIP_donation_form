@@ -882,7 +882,7 @@ const BBMSConfig = ({ organization, authToken, onUpdate }) => {
                 <li className="bg-red-50 border border-red-200 p-2 rounded">
                   <strong>⚠️ CRITICAL:</strong> Set redirect URI to exactly: <br/>
                   <code className="bg-red-100 px-2 py-1 rounded text-xs break-all">
-                    https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com/api/auth/blackbaud/callback
+                    https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com/api/auth/callback/blackbaud
                   </code>
                   <br/><span className="text-red-700 text-xs">This must match exactly (including https and the path)</span>
                 </li>
