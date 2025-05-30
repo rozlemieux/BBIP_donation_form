@@ -177,18 +177,20 @@ backend:
         agent: "testing"
         comment: "Tested the simplified endpoint structure (/payments instead of /payments/checkout/sessions) as requested. The code in server.py has been updated to use the simplified endpoint, but we're still getting 404 errors. We tested both direct GET and POST requests to https://api.sky.blackbaud.com/payments with the correct merchant ID (96563c2e-c97a-4db1-a0ed-1b2a8219f110) and subscription key (e08faf45a0e643e6bfe042a8e4488afb), but all returned 404 'Resource not found' errors. Web searches for the current Blackbaud API structure did not provide definitive information about the correct endpoint. This suggests that either the Blackbaud API endpoint structure is different from both /payments and /payments/checkout/sessions, or we need additional authentication/authorization to access the endpoint."
 
-frontend:
-  - task: "Frontend Integration"
+  - task: "Blackbaud JavaScript SDK Integration"
     implemented: true
-    working: "NA"
-    file: "/app/frontend/src/App.js"
+    working: true
+    file: "/app/backend/server.py"
     stuck_count: 0
-    priority: "medium"
+    priority: "high"
     needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
-        comment: "Frontend integration is not part of this testing scope"
+        comment: "Blackbaud JavaScript SDK integration is implemented in server.py"
+      - working: true
+        agent: "testing"
+        comment: "The Blackbaud JavaScript SDK integration is working correctly. The embedded donation form at /api/embed/donate/{org_id} successfully loads the JavaScript SDK from https://api.sky.blackbaud.com/skyui/js/bbCheckout.2.0.js and initializes it with the correct public key. The form contains the necessary JavaScript code to handle the checkout process and submit the transaction token to the backend."
 
 metadata:
   created_by: "testing_agent"
