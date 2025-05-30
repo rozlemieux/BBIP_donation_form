@@ -275,7 +275,7 @@ const DashboardHeader = ({ organization, onLogout, currentView, setCurrentView }
 };
 
 // Dashboard Component
-const Dashboard = ({ organization, authToken }) => {
+const Dashboard = ({ organization, authToken, setCurrentView }) => {
   const [stats, setStats] = useState({ total_donations: 0, total_amount: 0, recent_count: 0 });
 
   useEffect(() => {
