@@ -509,7 +509,7 @@ class BlackbaudClient:
             logging.error(f"Error processing transaction token: {str(e)}")
             raise HTTPException(500, f"Failed to process transaction: {str(e)}")
 
-        """Test if the provided access token is valid"""
+    async def test_credentials(self, access_token: str, test_mode: bool = True) -> bool:
         try:
             # Use the correct API base URL - 2025 update: same base URL for all environments
             base_url = "https://api.sky.blackbaud.com"
