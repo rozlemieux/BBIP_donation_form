@@ -658,6 +658,27 @@ async def handle_bbms_oauth_callback(callback_data: BBMSOAuthCallback):
         logging.error(f"OAuth callback traceback: {traceback.format_exc()}")
         raise HTTPException(500, f"OAuth callback failed: {str(e)}")
 
+@api_router.get("/debug/organization/{org_id}")
+async def debug_organization(org_id: str):
+    """Debug endpoint to check organization state"""
+    try:
+        org_data = await db.organizations.find_one({"id": org_id})
+        if not org_data:
+            return {"error": "Organization not found"}
+        
+        return {
+            "id": org_data.get("id"),
+            "name": org_data.get("name"),
+            "has_bb_access_token": bool(org_data.get("bb_access_token")),
+            "has_bb_merchant_id": bool(org_data.get("bb_merchant_id")),
+            "oauth_state": bool(org_data.get("oauth_state")),
+            "temp_app_id": bool(org_data.get("temp_app_id")),
+            "test_mode": org_data.get("test_mode", True),
+            "updated_at": org_data.get("updated_at")
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
 @api_router.post("/organizations/configure-bbms")
 async def configure_bbms(
     credentials: BBMSCredentials,
