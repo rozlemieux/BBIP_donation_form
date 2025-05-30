@@ -386,7 +386,7 @@ class BlackbaudOAuthTester:
             print("❌ Authentication required before testing payment checkout")
             return False
             
-        print("\n🔍 Testing payment checkout session creation...")
+        print("\n🔍 Testing payment checkout session creation with sandbox API endpoint...")
         
         # First, ensure we have Blackbaud credentials configured
         if not self.merchant_id or not self.bb_access_token:
@@ -407,6 +407,8 @@ class BlackbaudOAuthTester:
             }
         }
         
+        print("🔍 Testing with corrected sandbox API endpoint (api.sandbox.sky.blackbaud.com)...")
+        
         success, response = self.run_test(
             "Create Payment Checkout Session",
             "POST",
@@ -417,6 +419,15 @@ class BlackbaudOAuthTester:
         
         if not success:
             print("❌ Payment checkout session creation failed")
+            # Try to get more detailed error information
+            try:
+                error_url = f"{self.api_url}/debug/organization/{self.organization_id}"
+                debug_response = requests.get(error_url)
+                if debug_response.status_code == 200:
+                    debug_data = debug_response.json()
+                    print(f"📋 Organization debug info: {json.dumps(debug_data, indent=2)}")
+            except Exception as e:
+                print(f"Failed to get debug info: {str(e)}")
             return False
             
         # Check if we got the expected response fields
@@ -430,6 +441,13 @@ class BlackbaudOAuthTester:
         print(f"✅ Payment checkout session created successfully")
         print(f"✅ Session ID: {response.get('session_id')}")
         print(f"✅ Checkout URL: {response.get('checkout_url')}")
+        
+        # Verify the checkout URL contains the sandbox domain
+        checkout_url = response.get('checkout_url', '')
+        if 'sandbox' in checkout_url:
+            print(f"✅ Checkout URL correctly uses sandbox environment: {checkout_url}")
+        else:
+            print(f"⚠️ Checkout URL does not contain 'sandbox': {checkout_url}")
         
         # Store the session ID for potential future use
         self.session_id = response.get('session_id')
