@@ -504,16 +504,25 @@ async def start_bbms_oauth(
 async def handle_bbms_oauth_callback(callback_data: BBMSOAuthCallback):
     """Handle OAuth2 callback and exchange code for tokens"""
     try:
+        logging.info(f"OAuth callback received with state: {callback_data.state[:20]}...")
+        
         # Verify state parameter
         state_parts = callback_data.state.split(":", 1)
         if len(state_parts) != 2:
+            logging.error(f"Invalid state parameter format: {callback_data.state}")
             raise HTTPException(400, "Invalid state parameter")
         
         org_id = state_parts[0]
+        logging.info(f"Processing OAuth callback for organization: {org_id}")
         
         # Get organization and verify state
         org_data = await db.organizations.find_one({"id": org_id})
-        if not org_data or org_data.get("oauth_state") != callback_data.state:
+        if not org_data:
+            logging.error(f"Organization not found: {org_id}")
+            raise HTTPException(400, "Organization not found")
+            
+        if org_data.get("oauth_state") != callback_data.state:
+            logging.error(f"State mismatch. Expected: {org_data.get('oauth_state')[:20]}..., Got: {callback_data.state[:20]}...")
             raise HTTPException(400, "Invalid or expired state parameter")
         
         organization = Organization(**org_data)
@@ -523,10 +532,12 @@ async def handle_bbms_oauth_callback(callback_data: BBMSOAuthCallback):
         temp_app_secret = org_data.get("temp_app_secret")
         
         if not temp_app_id or not temp_app_secret:
+            logging.error("Missing app credentials for OAuth flow")
             raise HTTPException(400, "Missing app credentials for OAuth flow")
         
         # Decrypt app secret
         app_secret = decrypt_data(temp_app_secret)
+        logging.info(f"Using app ID: {temp_app_id[:8]}... for token exchange")
         
         # Exchange code for tokens using user's app credentials
         redirect_uri = "https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com/auth/blackbaud/callback"
@@ -594,17 +605,10 @@ async def handle_bbms_oauth_callback(callback_data: BBMSOAuthCallback):
         # Test the token (but don't fail if validation doesn't work - just log)
         access_token = token_data.get("access_token")
         if not access_token:
+            logging.error("No access token received from Blackbaud")
             raise HTTPException(400, "No access token received")
         
-        # Try to validate the token, but don't fail the whole process if validation fails
-        try:
-            is_valid = await bb_client.test_credentials(access_token, organization.test_mode)
-            if is_valid:
-                logging.info("Token validation successful")
-            else:
-                logging.warning("Token validation failed, but continuing anyway")
-        except Exception as e:
-            logging.warning(f"Token validation error (continuing anyway): {e}")
+        logging.info("Storing access token and updating organization...")
         
         # Always store the token since OAuth was successful
         
@@ -629,10 +633,17 @@ async def handle_bbms_oauth_callback(callback_data: BBMSOAuthCallback):
         update_data["temp_app_id"] = None
         update_data["temp_app_secret"] = None
         
-        await db.organizations.update_one(
+        result = await db.organizations.update_one(
             {"id": org_id},
             {"$set": update_data}
         )
+        
+        logging.info(f"Organization update result: {result.modified_count} documents modified")
+        
+        if result.modified_count == 0:
+            logging.warning("No documents were modified in the update operation")
+        else:
+            logging.info("OAuth2 flow completed successfully")
         
         return {
             "message": "OAuth2 flow completed successfully",
@@ -643,6 +654,8 @@ async def handle_bbms_oauth_callback(callback_data: BBMSOAuthCallback):
         raise
     except Exception as e:
         logging.error(f"OAuth callback error: {e}")
+        import traceback
+        logging.error(f"OAuth callback traceback: {traceback.format_exc()}")
         raise HTTPException(500, f"OAuth callback failed: {str(e)}")
 
 @api_router.post("/organizations/configure-bbms")
