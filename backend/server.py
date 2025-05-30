@@ -1203,7 +1203,82 @@ async def create_donation(donation: DonationRequest, authorization: str = Header
         raise HTTPException(500, f"Internal server error: {str(e)}")
 
 
-@app.post("/api/process-transaction")
+@app.post("/api/test-donate")
+async def create_test_donation(donation: DonationRequest):
+    """Create a test donation with mock credentials for demonstration purposes"""
+    try:
+        # Get test organization or create one
+        org_id = donation.org_id or "test-org-id"
+        
+        # Create test checkout configuration without requiring OAuth2
+        checkout_config = {
+            "public_key": os.environ.get('BB_PUBLIC_KEY', '737471a1-1e7e-40ab-aa3a-97d0fb806e6f'),
+            "merchant_account_id": os.environ.get('BB_MERCHANT_ACCOUNT_ID', '96563c2e-c97a-4db1-a0ed-1b2a8219f110'),
+            "amount": float(donation.amount),
+            "currency": "USD",
+            "donor_info": {
+                "email": donation.donor_email,
+                "name": donation.donor_name,
+                "phone": getattr(donation, 'donor_phone', ''),
+                "address": getattr(donation, 'donor_address', '')
+            },
+            "test_mode": True,
+            "return_url": "https://8b2b653e-9dbe-4e45-9ea1-8a28a59c538d.preview.emergentagent.com/success",
+            "cancel_url": "https://8b2b653e-9dbe-4e45-9ea1-8a28a59c538d.preview.emergentagent.com/cancel"
+        }
+        
+        logging.info(f"Test donation configuration created for ${donation.amount}")
+        
+        return {
+            "success": True,
+            "checkout_config": checkout_config,
+            "message": "Test checkout configuration created. This demonstrates the JavaScript SDK integration."
+        }
+        
+    except Exception as e:
+        logging.error(f"Error in create_test_donation: {str(e)}")
+        raise HTTPException(500, f"Internal server error: {str(e)}")
+
+
+@app.post("/api/test-process-transaction")
+async def process_test_transaction(request: dict):
+    """Process a test transaction token (demonstration purposes)"""
+    try:
+        transaction_token = request.get("transaction_token")
+        donation_data = request.get("donation_data", {})
+        
+        if not transaction_token:
+            raise HTTPException(400, "Transaction token is required")
+        
+        # Create test donation record
+        donation_record = {
+            "id": str(uuid.uuid4()),
+            "organization_id": donation_data.get("org_id", "test-org-id"),
+            "amount": donation_data.get("amount"),
+            "donor_email": donation_data.get("donor_email"),
+            "donor_name": donation_data.get("donor_name"),
+            "transaction_token": transaction_token,
+            "status": "completed",
+            "payment_method": "blackbaud_checkout_test",
+            "created_at": datetime.utcnow().isoformat(),
+            "test_mode": True
+        }
+        
+        await db["donations"].insert_one(donation_record)
+        
+        logging.info(f"Test donation recorded: {donation_record['id']} for ${donation_data.get('amount')}")
+        
+        return {
+            "success": True,
+            "donation_id": donation_record["id"],
+            "transaction_token": transaction_token,
+            "status": "completed",
+            "message": "Test donation processed successfully"
+        }
+        
+    except Exception as e:
+        logging.error(f"Error in process_test_transaction: {str(e)}")
+        raise HTTPException(500, f"Internal server error: {str(e)}")
 async def process_transaction(
     request: dict,
     authorization: str = Header(None)
