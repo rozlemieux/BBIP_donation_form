@@ -756,5 +756,135 @@ def main():
     
     return 0 if all_passed else 1
 
+def test_blackbaud_checkout_integration():
+    """Test the Blackbaud Checkout integration with JavaScript SDK"""
+    print("\n\n=== Testing Blackbaud Checkout Integration ===\n")
+    
+    # Define API URL
+    base_url = "https://8b2b653e-9dbe-4e45-9ea1-8a28a59c538d.preview.emergentagent.com"
+    api_url = f"{base_url}/api"
+    
+    # Test 1: Test /api/donate endpoint
+    print("Test 1: Testing /api/donate endpoint...")
+    donation_data = {
+        "org_id": "test-org-123",  # This should be a valid organization ID in your database
+        "amount": 25.00,
+        "donor_name": "Test Donor",
+        "donor_email": "test@example.com",
+        "donor_phone": "555-123-4567",
+        "donor_address": "123 Test St, Test City, TS 12345"
+    }
+    
+    try:
+        response = requests.post(f"{api_url}/donate", json=donation_data)
+        print(f"Status Code: {response.status_code}")
+        
+        if response.status_code == 200:
+            result = response.json()
+            print("Success! Checkout configuration received:")
+            print(f"  - Success: {result.get('success')}")
+            
+            checkout_config = result.get('checkout_config', {})
+            print(f"  - Public Key: {checkout_config.get('public_key')}")
+            print(f"  - Merchant Account ID: {checkout_config.get('merchant_account_id')}")
+            print(f"  - Amount: ${checkout_config.get('amount')}")
+            print(f"  - Test Mode: {checkout_config.get('test_mode')}")
+            
+            # Verify the checkout configuration has all required fields
+            required_fields = ['public_key', 'merchant_account_id', 'amount', 'currency', 'donor_info']
+            missing_fields = [field for field in required_fields if field not in checkout_config]
+            
+            if missing_fields:
+                print(f"ERROR: Missing required fields in checkout configuration: {missing_fields}")
+            else:
+                print("All required fields present in checkout configuration.")
+                
+            # Verify the public key matches the expected value
+            expected_public_key = "737471a1-1e7e-40ab-aa3a-97d0fb806e6f"
+            if checkout_config.get('public_key') == expected_public_key:
+                print(f"Public key matches expected value: {expected_public_key}")
+            else:
+                print(f"WARNING: Public key does not match expected value.")
+                print(f"  Expected: {expected_public_key}")
+                print(f"  Actual: {checkout_config.get('public_key')}")
+                
+            # Verify the merchant ID matches the expected value
+            expected_merchant_id = "96563c2e-c97a-4db1-a0ed-1b2a8219f110"
+            if checkout_config.get('merchant_account_id') == expected_merchant_id:
+                print(f"Merchant ID matches expected value: {expected_merchant_id}")
+            else:
+                print(f"WARNING: Merchant ID does not match expected value.")
+                print(f"  Expected: {expected_merchant_id}")
+                print(f"  Actual: {checkout_config.get('merchant_account_id')}")
+        else:
+            print(f"ERROR: Failed to get checkout configuration. Response: {response.text}")
+    except Exception as e:
+        print(f"ERROR: Exception occurred while testing /api/donate: {str(e)}")
+    
+    # Test 2: Test /api/process-transaction endpoint
+    print("\nTest 2: Testing /api/process-transaction endpoint...")
+    transaction_data = {
+        "transaction_token": "test-transaction-token-123",
+        "donation_data": {
+            "org_id": "test-org-123",
+            "amount": 25.00,
+            "donor_name": "Test Donor",
+            "donor_email": "test@example.com"
+        }
+    }
+    
+    try:
+        response = requests.post(f"{api_url}/process-transaction", json=transaction_data)
+        print(f"Status Code: {response.status_code}")
+        
+        if response.status_code == 200:
+            result = response.json()
+            print("Success! Transaction processed:")
+            print(f"  - Success: {result.get('success')}")
+            print(f"  - Donation ID: {result.get('donation_id')}")
+            print(f"  - Amount: ${result.get('amount')}")
+        else:
+            print(f"ERROR: Failed to process transaction. Response: {response.text}")
+    except Exception as e:
+        print(f"ERROR: Exception occurred while testing /api/process-transaction: {str(e)}")
+    
+    # Test 3: Test /api/embed/donate/{org_id} endpoint
+    print("\nTest 3: Testing /api/embed/donate/{org_id} endpoint...")
+    org_id = "test-org-123"  # This should be a valid organization ID in your database
+    
+    try:
+        response = requests.get(f"{api_url}/embed/donate/{org_id}")
+        print(f"Status Code: {response.status_code}")
+        
+        if response.status_code == 200:
+            html_content = response.text
+            print("Success! Embedded donation form HTML received.")
+            
+            # Check if the JavaScript SDK is included
+            if "https://api.sky.blackbaud.com/skyui/js/bbCheckout.2.0.js" in html_content:
+                print("JavaScript SDK script tag found in HTML.")
+            else:
+                print("ERROR: JavaScript SDK script tag not found in HTML.")
+            
+            # Check if the public key is included
+            if "BB_PUBLIC_KEY" in html_content:
+                print("Public key reference found in HTML.")
+            else:
+                print("ERROR: Public key reference not found in HTML.")
+            
+            # Check if the checkout initialization code is included
+            if "new bbCheckout" in html_content:
+                print("bbCheckout initialization code found in HTML.")
+            else:
+                print("ERROR: bbCheckout initialization code not found in HTML.")
+        else:
+            print(f"ERROR: Failed to get embedded donation form. Response: {response.text}")
+    except Exception as e:
+        print(f"ERROR: Exception occurred while testing /api/embed/donate/{org_id}: {str(e)}")
+    
+    print("\n=== Blackbaud Checkout Integration Testing Complete ===\n")
+
 if __name__ == "__main__":
     sys.exit(main())
+    # Uncomment to run Blackbaud Checkout integration tests
+    # test_blackbaud_checkout_integration()
