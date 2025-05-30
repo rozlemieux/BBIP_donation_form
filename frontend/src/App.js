@@ -545,10 +545,10 @@ const FormSettings = ({ organization, authToken, onUpdate }) => {
 // BBMS Configuration Component
 const BBMSConfig = ({ organization, authToken, onUpdate }) => {
   const [credentials, setCredentials] = useState({
-    merchant_id: '',
+    merchant_id: '96563c2e-c97a-4db1-a0ed-1b2a8219f110',
     access_token: '',
-    app_id: '',
-    app_secret: ''
+    app_id: '3VuF4BNX72+dClCDheqMN7xPfsu29GKGxdaobEIbWXU=',
+    app_secret: '3VuF4BNX72+dClCDheqMN7xPfsu29GKGxdaobEIbWXU='
   });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
