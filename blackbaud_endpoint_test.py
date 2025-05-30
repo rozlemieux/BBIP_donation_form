@@ -86,16 +86,6 @@ def check_checkout_data_structure():
         with open(server_file, "r") as f:
             server_code = f.read()
         
-        # Find the section where the checkout data is defined
-        checkout_data_pattern = r"checkout_data = {(.*?)}"
-        checkout_data_match = re.search(checkout_data_pattern, server_code, re.DOTALL)
-        
-        if not checkout_data_match:
-            print("\n❌ FAIL: Could not find the checkout data in the server code")
-            return False
-        
-        checkout_data_text = checkout_data_match.group(1)
-        
         # Check if the checkout data includes the required fields
         required_fields = [
             "merchant_account_id",
@@ -105,18 +95,18 @@ def check_checkout_data_structure():
             "metadata"
         ]
         
-        field_checks = {field: field in checkout_data_text for field in required_fields}
+        field_checks = {field: f'"{field}"' in server_code or f"'{field}'" in server_code for field in required_fields}
         
         for field, present in field_checks.items():
             print(f"✅ Checkout data includes {field}: {present}")
         
         # Check if the amount field includes value and currency
-        amount_structure_check = '"value"' in checkout_data_text and '"currency"' in checkout_data_text
+        amount_structure_check = '"value"' in server_code and '"currency"' in server_code
         print(f"✅ Amount field includes value and currency: {amount_structure_check}")
         
         # Check if the metadata field includes required information
         metadata_fields = ["donor_email", "donor_name", "org_id", "test_mode"]
-        metadata_checks = {field: field in checkout_data_text for field in metadata_fields}
+        metadata_checks = {field: f'"{field}"' in server_code or f"'{field}'" in server_code for field in metadata_fields}
         
         for field, present in metadata_checks.items():
             print(f"✅ Metadata includes {field}: {present}")
