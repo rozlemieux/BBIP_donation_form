@@ -237,6 +237,13 @@ class BlackbaudOAuthTester:
         test_access_token = "test_access_token_for_blackbaud_api"
         self.bb_access_token = test_access_token
         
+        # Verify we're using the correct merchant ID
+        print(f"🔍 Using merchant ID: {self.merchant_id}")
+        if self.merchant_id != "96563c2e-c97a-4db1-a0ed-1b2a8219f110":
+            print("⚠️ Warning: Using a different merchant ID than the one specified in the review request")
+            print("⚠️ Setting merchant ID to the correct value: 96563c2e-c97a-4db1-a0ed-1b2a8219f110")
+            self.merchant_id = "96563c2e-c97a-4db1-a0ed-1b2a8219f110"
+        
         success, response = self.run_test(
             "Manual Token Setup",
             "POST",
