@@ -1490,11 +1490,15 @@ async def serve_donation_embed(org_id: str):
                         org_id: ORG_ID
                     }};
                     
+                    console.log('Starting donation process with data:', donationData);
+                    
                     // Show loading
                     document.getElementById('donation-form').classList.add('hidden');
                     document.getElementById('loading').classList.remove('hidden');
                     
                     try {{
+                        console.log('Step 1: Getting checkout configuration from backend...');
+                        
                         // Step 1: Get checkout configuration from our backend
                         const configResponse = await fetch(`${{API_BASE}}/donate`, {{
                             method: 'POST',
@@ -1504,44 +1508,80 @@ async def serve_donation_embed(org_id: str):
                             body: JSON.stringify(donationData)
                         }});
                         
+                        console.log('Config response status:', configResponse.status);
+                        
                         if (!configResponse.ok) {{
-                            throw new Error('Failed to get checkout configuration');
+                            const errorText = await configResponse.text();
+                            console.error('Config response error:', errorText);
+                            throw new Error(`Failed to get checkout configuration: ${{configResponse.status}} - ${{errorText}}`);
                         }}
                         
                         const configResult = await configResponse.json();
+                        console.log('Config result:', configResult);
                         const checkoutConfig = configResult.checkout_config;
                         
-                        // Step 2: Initialize Blackbaud Checkout with JavaScript SDK
+                        if (!checkoutConfig) {{
+                            throw new Error('No checkout configuration received from server');
+                        }}
+                        
+                        console.log('Step 2: Checking for Blackbaud Checkout SDK...');
+                        console.log('bbCheckout available:', typeof bbCheckout);
+                        console.log('window.bbCheckout available:', typeof window.bbCheckout);
+                        
+                        // Step 2: Check multiple possible SDK variable names
+                        let CheckoutSDK = null;
                         if (typeof bbCheckout !== 'undefined') {{
-                            const checkout = new bbCheckout({{
-                                publicKey: BB_PUBLIC_KEY,
-                                merchantAccountId: checkoutConfig.merchant_account_id,
-                                amount: Math.round(checkoutConfig.amount * 100), // Convert to cents
-                                currency: 'USD',
-                                customer: {{
-                                    email: checkoutConfig.donor_info.email,
-                                    name: checkoutConfig.donor_info.name
-                                }},
-                                onSuccess: function(transactionToken) {{
-                                    handlePaymentSuccess(transactionToken, donationData);
-                                }},
-                                onCancel: function() {{
-                                    handlePaymentCancel();
-                                }},
-                                onError: function(error) {{
-                                    handlePaymentError(error);
-                                }}
-                            }});
-                            
-                            // Open the checkout modal
-                            checkout.open();
+                            CheckoutSDK = bbCheckout;
+                            console.log('Using bbCheckout');
+                        }} else if (typeof window.bbCheckout !== 'undefined') {{
+                            CheckoutSDK = window.bbCheckout;
+                            console.log('Using window.bbCheckout');
+                        }} else if (typeof window.BlackbaudCheckout !== 'undefined') {{
+                            CheckoutSDK = window.BlackbaudCheckout;
+                            console.log('Using window.BlackbaudCheckout');
                         }} else {{
+                            console.error('Blackbaud Checkout SDK not found. Available objects:', Object.keys(window));
                             throw new Error('Blackbaud Checkout SDK not loaded');
                         }}
                         
+                        console.log('Step 3: Initializing checkout with config:', {{
+                            publicKey: BB_PUBLIC_KEY,
+                            merchantAccountId: checkoutConfig.merchant_account_id,
+                            amount: Math.round(checkoutConfig.amount * 100),
+                            currency: 'USD'
+                        }});
+                        
+                        // Step 3: Initialize Blackbaud Checkout with JavaScript SDK
+                        const checkout = new CheckoutSDK({{
+                            publicKey: BB_PUBLIC_KEY,
+                            merchantAccountId: checkoutConfig.merchant_account_id,
+                            amount: Math.round(checkoutConfig.amount * 100), // Convert to cents
+                            currency: 'USD',
+                            customer: {{
+                                email: checkoutConfig.donor_info.email,
+                                name: checkoutConfig.donor_info.name
+                            }},
+                            onSuccess: function(transactionToken) {{
+                                console.log('Payment success, token:', transactionToken);
+                                handlePaymentSuccess(transactionToken, donationData);
+                            }},
+                            onCancel: function() {{
+                                console.log('Payment cancelled');
+                                handlePaymentCancel();
+                            }},
+                            onError: function(error) {{
+                                console.error('Payment error:', error);
+                                handlePaymentError(error);
+                            }}
+                        }});
+                        
+                        console.log('Step 4: Opening checkout modal...');
+                        // Open the checkout modal
+                        checkout.open();
+                        
                     }} catch (error) {{
                         console.error('Donation initialization failed:', error);
-                        alert('Failed to initialize payment. Please try again.');
+                        alert(`Failed to initialize payment: ${{error.message}}`);
                         
                         // Show form again
                         document.getElementById('loading').classList.add('hidden');
