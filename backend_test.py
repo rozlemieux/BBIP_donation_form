@@ -95,13 +95,16 @@ class OAuthFlowTester:
         
         return success, response
 
-    def test_oauth_start(self, merchant_id="test_merchant_123", app_id="test_app_id", app_secret="test_app_secret"):
-        """Test starting the OAuth flow"""
+    def test_oauth_start(self, merchant_id="96563c2e-c97a-4db1-a0ed-1b2a8219f110", app_id="3VuF4BNX72+dClCDheqMN7xPfsu29GKGxdaobEIbWXU=", app_secret="3VuF4BNX72+dClCDheqMN7xPfsu29GKGxdaobEIbWXU="):
+        """Test starting the OAuth flow with real credentials"""
         if not self.token:
             print("❌ No auth token available")
             return False, None
             
-        print("\n🔄 Starting OAuth flow...")
+        print("\n🔄 Starting OAuth flow with real credentials...")
+        print(f"Using Merchant ID: {merchant_id}")
+        print(f"Using App ID: {app_id[:10]}...")
+        
         success, response = self.run_test(
             "Start OAuth Flow",
             "POST",
