@@ -1136,7 +1136,7 @@ async def serve_donation_embed(org_id: str):
                                 <div class="grid grid-cols-3 gap-2 mb-3">
                                     ${{config.preset_amounts.map(amount => `
                                         <button type="button" class="amount-btn bg-gray-100 hover:bg-blue-100 border border-gray-300 rounded px-3 py-2 text-sm font-medium" data-amount="${{amount}}">
-                                            $$${{amount}}
+                                            $${{amount}}
                                         </button>
                                     `).join('')}}
                                 </div>
