@@ -154,7 +154,7 @@ backend:
     implemented: true
     working: false
     file: "/app/backend/server.py"
-    stuck_count: 2
+    stuck_count: 3
     priority: "high"
     needs_retesting: false
     status_history:
@@ -170,6 +170,9 @@ backend:
       - working: false
         agent: "testing"
         comment: "The API URL was changed from 'https://api.sky.blackbaud.com/sandbox' to 'https://api.sandbox.sky.blackbaud.com', but we're still encountering issues. The container can't resolve the hostname 'api.sandbox.sky.blackbaud.com' (DNS resolution error), and all attempts to use 'https://api.sky.blackbaud.com' with various endpoint paths (/payments/v1/checkout/sessions, /payments/checkout/sessions, etc.) return 404 errors. We tried multiple URL structures and endpoint paths based on web searches, but none were successful. This suggests that either the Blackbaud API endpoint structure has changed, or we don't have the correct access permissions."
+      - working: false
+        agent: "testing"
+        comment: "Conducted additional testing with the correct merchant ID (96563c2e-c97a-4db1-a0ed-1b2a8219f110) and subscription key (e08faf45a0e643e6bfe042a8e4488afb). We fixed the incorrect URL format in server.py (changed from 'https://api.sky.blackbaud.com/sandbox' to 'https://api.sky.blackbaud.com'). However, we're still getting 404 errors when trying to access the /payments/checkout/sessions endpoint. We also tried the sandbox URL (https://api.sandbox.sky.blackbaud.com) but encountered DNS resolution errors. This suggests that either the Blackbaud API endpoint structure has changed, or we need additional authentication/authorization to access the endpoint. We need to verify the correct endpoint URL and access requirements with Blackbaud's documentation or support."
 
 frontend:
   - task: "Frontend Integration"
