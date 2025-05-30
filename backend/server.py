@@ -1279,6 +1279,9 @@ async def process_test_transaction(request: dict):
     except Exception as e:
         logging.error(f"Error in process_test_transaction: {str(e)}")
         raise HTTPException(500, f"Internal server error: {str(e)}")
+
+
+@app.post("/api/process-transaction")
 async def process_transaction(
     request: dict,
     authorization: str = Header(None)
