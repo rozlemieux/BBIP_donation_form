@@ -154,7 +154,7 @@ backend:
     implemented: true
     working: false
     file: "/app/backend/server.py"
-    stuck_count: 1
+    stuck_count: 2
     priority: "high"
     needs_retesting: false
     status_history:
@@ -167,6 +167,9 @@ backend:
       - working: false
         agent: "testing"
         comment: "The payment checkout endpoint is still returning 404 errors. We tried multiple endpoint variations (/payments/checkout/sessions, /payment/v1/checkout/sessions, /payment/checkout/sessions, /payments/v1/checkout/sessions) but all returned 404 'Resource not found' errors. The issue might be with the Blackbaud API endpoint URL or our access to it. We need to verify the correct endpoint URL with Blackbaud's documentation or support."
+      - working: false
+        agent: "testing"
+        comment: "The API URL was changed from 'https://api.sky.blackbaud.com/sandbox' to 'https://api.sandbox.sky.blackbaud.com', but we're still encountering issues. The container can't resolve the hostname 'api.sandbox.sky.blackbaud.com' (DNS resolution error), and all attempts to use 'https://api.sky.blackbaud.com' with various endpoint paths (/payments/v1/checkout/sessions, /payments/checkout/sessions, etc.) return 404 errors. We tried multiple URL structures and endpoint paths based on web searches, but none were successful. This suggests that either the Blackbaud API endpoint structure has changed, or we don't have the correct access permissions."
 
 frontend:
   - task: "Frontend Integration"
