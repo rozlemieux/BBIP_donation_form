@@ -471,74 +471,117 @@ class BlackbaudClient:
             return False
 
     async def create_payment_checkout(self, donation: DonationRequest, merchant_id: str, access_token: str, test_mode: bool = True) -> Dict:
-        """Create a payment checkout session"""
+        """
+        Process a Blackbaud Checkout transaction token.
+        This function is called after the frontend JavaScript SDK completes the checkout
+        and provides a transaction token.
+        """
         try:
-            # Use the correct API base URL - 2025 update: sandbox and production use same base URL
-            # Sandbox/production is handled by subscription keys and credentials, not different URLs
-            base_url = "https://api.sky.blackbaud.com"
+            # Get environment variables
+            subscription_key = os.environ.get('BB_PAYMENT_API_SUBSCRIPTION')
+            public_key = os.environ.get('BB_PUBLIC_KEY')
             
+            if not subscription_key or not public_key or not merchant_id:
+                raise HTTPException(500, "Blackbaud API credentials not properly configured")
+            
+            # Return the configuration data needed for frontend JavaScript SDK
+            mode_text = "sandbox" if test_mode else "production"
+            logging.info(f"Creating checkout configuration in {mode_text} mode for ${donation.amount}")
+            
+            checkout_config = {
+                "public_key": public_key,
+                "merchant_account_id": merchant_id,
+                "amount": float(donation.amount),
+                "currency": "USD",
+                "donor_info": {
+                    "email": donation.donor_email,
+                    "name": donation.donor_name,
+                    "phone": getattr(donation, 'donor_phone', ''),
+                    "address": getattr(donation, 'donor_address', '')
+                },
+                "test_mode": test_mode,
+                "return_url": f"https://8b2b653e-9dbe-4e45-9ea1-8a28a59c538d.preview.emergentagent.com/success",
+                "cancel_url": f"https://8b2b653e-9dbe-4e45-9ea1-8a28a59c538d.preview.emergentagent.com/cancel"
+            }
+            
+            logging.info(f"Checkout configuration created for {mode_text} mode")
+            return checkout_config
+            
+        except Exception as e:
+            logging.error(f"Error creating checkout configuration: {str(e)}")
+            raise HTTPException(500, f"Failed to create checkout configuration: {str(e)}")
+
+
+    async def process_transaction_token(self, token: str, organization_id: str, access_token: str, donation_data: dict):
+        """
+        Process a completed Blackbaud checkout transaction token
+        This is called after the JavaScript SDK successfully completes the payment
+        """
+        try:
+            # Get environment variables
+            subscription_key = os.environ.get('BB_PAYMENT_API_SUBSCRIPTION')
+            
+            # Verify and process the transaction token with Blackbaud
+            base_url = "https://api.sky.blackbaud.com"
             headers = {
-                "Bb-Api-Subscription-Key": self.payment_subscription_key,
+                "Bb-Api-Subscription-Key": subscription_key,
                 "Authorization": f"Bearer {access_token}",
                 "Content-Type": "application/json"
             }
             
-            # Use test URLs for return/cancel URLs
-            return_url = f"https://8b2b653e-9dbe-4e45-9ea1-8a28a59c538d.preview.emergentagent.com/success"
-            cancel_url = f"https://8b2b653e-9dbe-4e45-9ea1-8a28a59c538d.preview.emergentagent.com/cancel"
-            
-            checkout_data = {
-                "merchant_account_id": merchant_id,
-                "amount": {
-                    "value": int(donation.amount * 100),  # Convert to cents
-                    "currency": "USD"
-                },
-                "return_url": return_url,
-                "cancel_url": cancel_url,
-                "metadata": {
-                    "donor_email": donation.donor_email,
-                    "donor_name": donation.donor_name,
-                    "org_id": donation.org_id,
-                    "test_mode": "true" if test_mode else "false"
-                }
+            # Call the Blackbaud transaction endpoint to verify and process the token
+            transaction_data = {
+                "transaction_token": token,
+                "merchant_account_id": os.environ.get('BB_MERCHANT_ACCOUNT_ID')
             }
             
-            mode_text = "sandbox" if test_mode else "production"
-            logging.info(f"Creating checkout in {mode_text} mode for ${donation.amount}")
-            logging.info(f"Request URL: {base_url}/payments")
-            logging.info(f"Merchant ID: {merchant_id}")
+            logging.info(f"Processing transaction token: {token[:8]}...")
             
             async with httpx.AsyncClient() as client:
                 response = await client.post(
-                    f"{base_url}/payments",
+                    f"{base_url}/payments/transactions",
                     headers=headers,
-                    json=checkout_data,
+                    json=transaction_data,
                     timeout=30.0
                 )
                 
-                logging.info(f"Blackbaud API Response: {response.status_code}")
-                logging.info(f"Response body: {response.text}")
+                logging.info(f"Transaction processing response: {response.status_code}")
                 
                 if response.status_code == 201 or response.status_code == 200:
-                    checkout_response = response.json()
-                    logging.info(f"Checkout created successfully: {checkout_response.get('id')} in {mode_text} mode")
-                    return checkout_response
+                    transaction_result = response.json()
+                    
+                    # Store the successful donation in our database
+                    donation_record = {
+                        "id": str(uuid.uuid4()),
+                        "organization_id": organization_id,
+                        "amount": donation_data.get("amount"),
+                        "donor_email": donation_data.get("donor_email"),
+                        "donor_name": donation_data.get("donor_name"),
+                        "transaction_token": token,
+                        "transaction_id": transaction_result.get("id"),
+                        "status": "completed",
+                        "payment_method": "blackbaud_checkout",
+                        "created_at": datetime.utcnow().isoformat(),
+                        "blackbaud_response": transaction_result
+                    }
+                    
+                    await db["donations"].insert_one(donation_record)
+                    
+                    logging.info(f"Donation recorded successfully: {donation_record['id']}")
+                    return {
+                        "success": True,
+                        "donation_id": donation_record["id"],
+                        "transaction_id": transaction_result.get("id"),
+                        "status": "completed"
+                    }
                 else:
                     error_text = response.text
-                    logging.error(f"Checkout creation failed: {response.status_code} - {error_text}")
+                    logging.error(f"Transaction processing failed: {response.status_code} - {error_text}")
+                    raise HTTPException(400, f"Transaction processing failed: {error_text}")
                     
-                    # Try to parse error details
-                    try:
-                        error_details = response.json()
-                        error_message = error_details.get('message', error_text)
-                    except:
-                        error_message = error_text
-                    
-                    raise HTTPException(400, f"Blackbaud error: {error_message}")
-                
         except Exception as e:
-            logging.error(f"Error creating payment checkout: {e}")
-            raise HTTPException(500, f"Checkout creation failed: {str(e)}")
+            logging.error(f"Error processing transaction token: {str(e)}")
+            raise HTTPException(500, f"Failed to process transaction: {str(e)}")
 
 bb_client = BlackbaudClient()
 
