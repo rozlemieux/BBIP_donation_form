@@ -473,7 +473,7 @@ class BlackbaudClient:
         """Create a payment checkout session"""
         try:
             # Use the correct API base URL - sandbox has different subdomain
-            base_url = "https://api.sky.blackbaud.com"
+            base_url = "https://api.sandbox.sky.blackbaud.com" if test_mode else "https://api.sky.blackbaud.com"
             
             headers = {
                 "Bb-Api-Subscription-Key": self.payment_subscription_key,
