@@ -1662,6 +1662,7 @@ async def serve_test_donation_embed():
     </body>
     </html>
     """)
+@app.get("/api/embed/donate/{org_id}")
 async def serve_donation_embed(org_id: str):
     """Serve donation form for iframe embedding with Blackbaud JavaScript SDK"""
     public_key = os.environ.get('BB_PUBLIC_KEY')
