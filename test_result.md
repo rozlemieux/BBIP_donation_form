@@ -269,6 +269,7 @@ test_plan:
   current_focus:
     - "Blackbaud Checkout Integration"
     - "Test Organization Setup with Encrypted Token"
+    - "Test Donation Endpoints"
   stuck_tasks:
     - "Donation Checkout Endpoint"
   test_all: false
