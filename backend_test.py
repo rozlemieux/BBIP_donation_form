@@ -613,11 +613,11 @@ def main():
     
     # Run tests
     print("\n===== DONATION PAGE BUILDER TESTS =====\n")
-    print("Testing with Blackbaud API Configuration:")
+    print("Testing with Blackbaud 2025 API Configuration:")
     print(f"- Merchant Account ID: 96563c2e-c97a-4db1-a0ed-1b2a8219f110 (confirmed correct)")
-    print(f"- Payments API Subscription Key: {os.environ.get('BB_PAYMENT_API_SUBSCRIPTION', 'e08faf45a0e643e6bfe042a8e4488afb')}")
-    print(f"- API Endpoint: https://api.sandbox.sky.blackbaud.com/payments/checkout/sessions")
-    print(f"- Environment: {os.environ.get('BB_ENVIRONMENT', 'sandbox')}")
+    print(f"- Payments API Subscription Key: e08faf45a0e643e6bfe042a8e4488afb")
+    print(f"- API Endpoint: https://api.sky.blackbaud.com/payments/checkout/sessions")
+    print(f"- Environment: Handled by credentials (no more subdomain)")
     print("")
     
     # Test 1: Register and login
@@ -649,7 +649,7 @@ def main():
     # Test 9: Donation form configuration
     donation_config_ok = tester.test_donation_form_config()
     
-    # Test 10: Blackbaud API URL configuration (new test for the fix)
+    # Test 10: Blackbaud API URL configuration (new test for the 2025 fix)
     api_url_ok = tester.test_blackbaud_api_url_configuration()
     
     # Test 11: Payment checkout session (critical test for the fixed endpoint)
@@ -671,7 +671,7 @@ def main():
     print(f"Test Mode Toggle: {'✅ PASS' if test_mode_ok else '❌ FAIL'}")
     print(f"Embed Route: {'✅ PASS' if embed_route_ok else '❌ FAIL'}")
     print(f"Donation Form Config: {'✅ PASS' if donation_config_ok else '❌ FAIL'}")
-    print(f"Blackbaud API URL Configuration: {'✅ PASS' if api_url_ok else '❌ FAIL'}")
+    print(f"Blackbaud 2025 API URL Configuration: {'✅ PASS' if api_url_ok else '❌ FAIL'}")
     print(f"Payment Checkout Session: {'✅ PASS' if payment_checkout_ok else '❌ FAIL'}")
     print(f"Donation Status: {'✅ PASS' if donation_status_ok else '❌ FAIL'}")
     print(f"Organization Transactions: {'✅ PASS' if transactions_ok else '❌ FAIL'}")
@@ -694,11 +694,11 @@ def main():
     
     # Special emphasis on payment checkout and API URL
     if not api_url_ok:
-        print("\n❌ CRITICAL FAILURE: Blackbaud API URL is not correctly configured for sandbox!")
-        print("   The base URL should be https://api.sandbox.sky.blackbaud.com for sandbox mode.")
+        print("\n❌ CRITICAL FAILURE: Blackbaud API URL is not correctly configured for 2025 API structure!")
+        print("   The base URL should be https://api.sky.blackbaud.com (no more sandbox subdomain).")
     else:
-        print("\n✅ CRITICAL TEST PASSED: Blackbaud API URL is correctly configured for sandbox!")
-        print("   The base URL is properly set to https://api.sandbox.sky.blackbaud.com.")
+        print("\n✅ CRITICAL TEST PASSED: Blackbaud API URL is correctly configured for 2025 API structure!")
+        print("   The base URL is properly set to https://api.sky.blackbaud.com.")
     
     if not payment_checkout_ok:
         print("\n❌ CRITICAL FAILURE: Payment checkout session creation failed!")
