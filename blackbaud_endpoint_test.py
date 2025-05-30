@@ -108,12 +108,11 @@ def check_checkout_data_structure():
         
         # Check if the checkout data includes the required fields
         required_fields = [
-            "merchant_id",
+            "merchant_account_id",
             "amount",
-            "currency",
-            "payment_method",
-            "success_url",
-            "cancel_url"
+            "return_url",
+            "cancel_url",
+            "metadata"
         ]
         
         field_checks = {field: field in checkout_data_text for field in required_fields}
@@ -121,7 +120,18 @@ def check_checkout_data_structure():
         for field, present in field_checks.items():
             print(f"✅ Checkout data includes {field}: {present}")
         
-        if all(field_checks.values()):
+        # Check if the amount field includes value and currency
+        amount_structure_check = '"value"' in checkout_data_text and '"currency"' in checkout_data_text
+        print(f"✅ Amount field includes value and currency: {amount_structure_check}")
+        
+        # Check if the metadata field includes required information
+        metadata_fields = ["donor_email", "donor_name", "org_id", "test_mode"]
+        metadata_checks = {field: field in checkout_data_text for field in metadata_fields}
+        
+        for field, present in metadata_checks.items():
+            print(f"✅ Metadata includes {field}: {present}")
+        
+        if all(field_checks.values()) and amount_structure_check and all(metadata_checks.values()):
             print("\n✅ PASS: The Blackbaud payment API checkout data structure is correct")
             return True
         else:
