@@ -616,6 +616,12 @@ def main():
     
     # Run tests
     print("\n===== DONATION PAGE BUILDER TESTS =====\n")
+    print("Testing with Blackbaud API Configuration:")
+    print(f"- Merchant Account ID: 96563c2e-c97a-4db1-a0ed-1b2a8219f110 (confirmed correct)")
+    print(f"- Payments API Subscription Key: {os.environ.get('BB_PAYMENT_API_SUBSCRIPTION', 'e08faf45a0e643e6bfe042a8e4488afb')}")
+    print(f"- API Endpoint: https://api.sandbox.sky.blackbaud.com/payments/checkout/sessions")
+    print(f"- Environment: {os.environ.get('BB_ENVIRONMENT', 'sandbox')}")
+    print("")
     
     # Test 1: Register and login
     if not tester.test_register_and_login():
