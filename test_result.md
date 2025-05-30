@@ -227,6 +227,24 @@ backend:
       - working: true
         agent: "testing"
         comment: "Successfully created a test organization with an encrypted access token. The token was properly encrypted using the Fernet encryption method with the ENCRYPTION_KEY from the .env file. The organization was created with the correct merchant ID (96563c2e-c97a-4db1-a0ed-1b2a8219f110) and the encrypted token was stored in the database."
+        
+  - task: "Test Donation Endpoints"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "Added test for the test donation endpoints (/api/test-donate, /api/test-process-transaction, and /api/embed/test-donate)."
+      - working: true
+        agent: "testing"
+        comment: "Successfully tested the test donation endpoints. The /api/test-donate endpoint correctly returns checkout configurations with the proper public key (737471a1-1e7e-40ab-aa3a-97d0fb806e6f) and merchant ID (96563c2e-c97a-4db1-a0ed-1b2a8219f110). The /api/test-process-transaction endpoint successfully processes mock transactions and stores them in the database. The /api/embed/test-donate endpoint correctly loads the test form with the JavaScript SDK from https://payments.blackbaud.com/checkout/bbCheckoutLoad.js."
+      - working: true
+        agent: "testing"
+        comment: "Verified that all test endpoints work with various donation amounts ($25, $50, $100) as required. The complete donation flow from form to configuration to processing is fully functional without requiring OAuth2 authentication, making these endpoints ideal for testing purposes."
 
 frontend:
   - task: "Frontend Integration"
