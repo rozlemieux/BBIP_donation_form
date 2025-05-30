@@ -393,7 +393,7 @@ class BlackbaudOAuthTester:
             print("❌ Authentication required before testing payment checkout")
             return False
             
-        print("\n🔍 Testing payment checkout session creation with sandbox API endpoint...")
+        print("\n🔍 Testing payment checkout session creation with 2025 API structure...")
         
         # First, ensure we have Blackbaud credentials configured
         if not self.merchant_id or not self.bb_access_token:
@@ -414,18 +414,19 @@ class BlackbaudOAuthTester:
             }
         }
         
-        print("🔍 Testing with corrected sandbox API endpoint (api.sandbox.sky.blackbaud.com)...")
+        print("🔍 Testing with 2025 API structure (https://api.sky.blackbaud.com)...")
         print(f"🔍 Using merchant ID: {self.merchant_id}")
+        print(f"🔍 Using subscription key: e08faf45a0e643e6bfe042a8e4488afb")
         
         # First, let's test the payment configurations endpoint directly
         try:
             print("\n🔍 Testing payment configurations endpoint directly...")
             headers = {
-                "Bb-Api-Subscription-Key": os.environ.get('BB_PAYMENT_API_SUBSCRIPTION', 'e08faf45a0e643e6bfe042a8e4488afb'),
+                "Bb-Api-Subscription-Key": "e08faf45a0e643e6bfe042a8e4488afb",
                 "Content-Type": "application/json"
             }
             
-            configs_url = "https://api.sandbox.sky.blackbaud.com/payments/configurations"
+            configs_url = "https://api.sky.blackbaud.com/payments/configurations"
             print(f"Making request to: {configs_url}")
             
             configs_response = requests.get(
@@ -438,6 +439,12 @@ class BlackbaudOAuthTester:
             if configs_response.status_code == 200:
                 print("✅ Payment configurations endpoint is accessible!")
                 print(f"Response: {configs_response.text[:200]}...")  # Show first 200 chars
+                
+                # Check if the merchant ID is in the response
+                if self.merchant_id in configs_response.text:
+                    print(f"✅ Merchant ID {self.merchant_id} found in configurations response!")
+                else:
+                    print(f"⚠️ Merchant ID {self.merchant_id} not found in configurations response")
             else:
                 print(f"❌ Failed to access payment configurations: {configs_response.text}")
         except Exception as e:
@@ -476,13 +483,6 @@ class BlackbaudOAuthTester:
         print(f"✅ Payment checkout session created successfully")
         print(f"✅ Session ID: {response.get('session_id')}")
         print(f"✅ Checkout URL: {response.get('checkout_url')}")
-        
-        # Verify the checkout URL contains the sandbox domain
-        checkout_url = response.get('checkout_url', '')
-        if 'sandbox' in checkout_url:
-            print(f"✅ Checkout URL correctly uses sandbox environment: {checkout_url}")
-        else:
-            print(f"⚠️ Checkout URL does not contain 'sandbox': {checkout_url}")
         
         # Store the session ID for potential future use
         self.session_id = response.get('session_id')
