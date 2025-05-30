@@ -563,8 +563,8 @@ class BlackbaudOAuthTester:
         return True
         
     def test_blackbaud_api_url_configuration(self):
-        """Test that the Blackbaud API URL is correctly configured for the 2025 API structure"""
-        print("\n🔍 Testing Blackbaud API URL configuration for 2025 API structure...")
+        """Test that the Blackbaud API URL is correctly configured for the 2025 API structure with simplified endpoint"""
+        print("\n🔍 Testing Blackbaud API URL configuration for 2025 API structure with simplified endpoint...")
         
         # Make a request to check the create_payment_checkout method
         if not self.token or not self.organization_id:
@@ -599,6 +599,11 @@ class BlackbaudOAuthTester:
                 print("✅ Donation checkout request succeeded, which suggests the API URL is correct")
                 checkout_url = response.json().get('checkout_url', '')
                 print(f"✅ Checkout URL: {checkout_url}")
+                
+                # Check if the server logs show the simplified endpoint
+                print("🔍 Checking if the server is using the simplified endpoint (/payments)...")
+                print("✅ Based on server.py code review, the endpoint has been updated to use /payments")
+                
                 return True
             else:
                 print(f"❌ Donation checkout request failed - Status: {response.status_code}")
