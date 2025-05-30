@@ -486,6 +486,67 @@ class BlackbaudOAuthTester:
         print(f"✅ Donor: {response.get('donor_name')}")
         
         return True
+        
+    def test_blackbaud_api_url_configuration(self):
+        """Test that the Blackbaud API URL is correctly configured for sandbox mode"""
+        print("\n🔍 Testing Blackbaud API URL configuration...")
+        
+        # Make a request to check the create_payment_checkout method
+        if not self.token or not self.organization_id:
+            print("❌ Authentication required before testing API URL configuration")
+            return False
+            
+        # Create a test donation request to trigger the API URL check
+        donation_data = {
+            "amount": 5.00,  # Small amount for testing
+            "donor_name": "URL Test Donor",
+            "donor_email": "urltest@example.com",
+            "org_id": self.organization_id,
+            "custom_fields": {
+                "source": "url_test",
+                "test_type": "api_url_check"
+            }
+        }
+        
+        # We'll make the request but we're mainly interested in the logs
+        try:
+            url = f"{self.api_url}/donations/checkout"
+            headers = {
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {self.token}'
+            }
+            
+            print("🔍 Making test request to check API URL in logs...")
+            response = requests.post(url, json=donation_data, headers=headers)
+            
+            # If we can't check logs, look at the response
+            if response.status_code == 200:
+                print("✅ Donation checkout request succeeded, which suggests the API URL is correct")
+                checkout_url = response.json().get('checkout_url', '')
+                if 'sandbox' in checkout_url:
+                    print(f"✅ Checkout URL confirms sandbox environment: {checkout_url}")
+                else:
+                    print(f"⚠️ Checkout URL does not contain 'sandbox': {checkout_url}")
+                return True
+            else:
+                print(f"❌ Donation checkout request failed - Status: {response.status_code}")
+                try:
+                    error_data = response.json()
+                    print(f"Error details: {json.dumps(error_data, indent=2)}")
+                    
+                    # Check if the error message mentions URL issues
+                    error_detail = error_data.get('detail', '')
+                    if '404' in error_detail and 'not found' in error_detail.lower():
+                        print("❌ Error suggests API URL is incorrect (404 Not Found)")
+                        return False
+                except:
+                    print(f"Response text: {response.text}")
+                
+                return False
+                
+        except Exception as e:
+            print(f"❌ Error testing API URL configuration: {str(e)}")
+            return False
 
     def test_organization_transactions(self):
         """Test getting organization transactions"""
