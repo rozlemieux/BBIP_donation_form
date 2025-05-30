@@ -101,3 +101,87 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "Test the Donation Page Builder application backend with the recent fix for the Blackbaud payment API endpoint. Specifically: 1) Test the API endpoints are working: Organization registration and login, OAuth2 flow endpoints, Form customization endpoints. 2) Focus on the payment checkout endpoint fix: The endpoint was changed from `/payments/v1/checkouts` to `/payments/checkout/sessions`, Test that the API call structure is correct, Test with mock/dummy data to see if the request format is valid. 3) Check backend logs for any errors: Look for import errors or startup issues, Check if the Blackbaud API integration is properly structured. 4) Test key API flows: Organization auth flow, Form settings management, The donation creation and checkout flow (up to the Blackbaud API call)."
+
+backend:
+  - task: "Organization Registration and Login"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Organization registration and login endpoints are implemented in server.py"
+
+  - task: "OAuth2 Flow Endpoints"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "OAuth2 flow endpoints are implemented in server.py"
+
+  - task: "Form Customization Endpoints"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Form customization endpoints are implemented in server.py"
+
+  - task: "Donation Checkout Endpoint"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Donation checkout endpoint has been updated to use /payments/checkout/sessions instead of /payments/v1/checkouts"
+
+frontend:
+  - task: "Frontend Integration"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Frontend integration is not part of this testing scope"
+
+metadata:
+  created_by: "testing_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Organization Registration and Login"
+    - "OAuth2 Flow Endpoints"
+    - "Form Customization Endpoints"
+    - "Donation Checkout Endpoint"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "testing"
+    message: "Initializing test_result.md with the structure for testing the Donation Page Builder backend API endpoints. Will focus on testing the organization registration and login, OAuth2 flow, form customization, and donation checkout endpoints."
