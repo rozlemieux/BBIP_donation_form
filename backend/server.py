@@ -658,6 +658,72 @@ async def handle_bbms_oauth_callback(callback_data: BBMSOAuthCallback):
         logging.error(f"OAuth callback traceback: {traceback.format_exc()}")
         raise HTTPException(500, f"OAuth callback failed: {str(e)}")
 
+@api_router.post("/organizations/test-oauth-credentials")
+async def test_oauth_credentials(
+    test_data: BBMSOAuthStart,
+    org_id: str = Depends(verify_token)
+):
+    """Test OAuth credentials without going through full flow"""
+    try:
+        # Test if we can generate a proper OAuth URL with user's credentials
+        from urllib.parse import urlencode
+        redirect_uri = "https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com/auth/blackbaud/callback"
+        
+        params = {
+            "client_id": test_data.app_id,
+            "response_type": "code",
+            "redirect_uri": redirect_uri,
+            "state": "test_state",
+            "scope": "openid offline_access"
+        }
+        
+        query_string = urlencode(params)
+        oauth_url = f"{BB_OAUTH_URL}/authorization?{query_string}"
+        
+        return {
+            "oauth_url": oauth_url,
+            "app_id_used": test_data.app_id,
+            "redirect_uri": redirect_uri,
+            "oauth_endpoint": f"{BB_OAUTH_URL}/authorization",
+            "token_endpoint": f"{BB_OAUTH_URL}/token",
+            "status": "OAuth URL generated successfully"
+        }
+        
+    except Exception as e:
+        logging.error(f"OAuth credentials test error: {e}")
+        raise HTTPException(500, f"Failed to test OAuth credentials: {str(e)}")
+
+@api_router.post("/organizations/manual-token-test")
+async def manual_token_test(
+    manual_data: BBMSCredentials,
+    org_id: str = Depends(verify_token)
+):
+    """Test manual token storage (bypass OAuth)"""
+    try:
+        # Get organization
+        organization = await get_organization(org_id)
+        
+        # Encrypt and store token
+        encrypted_access_token = encrypt_data(manual_data.access_token)
+        
+        # Update organization
+        await db.organizations.update_one(
+            {"id": org_id},
+            {
+                "$set": {
+                    "bb_access_token": encrypted_access_token,
+                    "bb_merchant_id": manual_data.merchant_id,
+                    "updated_at": datetime.utcnow()
+                }
+            }
+        )
+        
+        return {"message": "Manual token stored successfully (test mode)"}
+        
+    except Exception as e:
+        logging.error(f"Manual token test error: {e}")
+        raise HTTPException(500, f"Failed to store manual token: {str(e)}")
+
 @api_router.get("/debug/organization/{org_id}")
 async def debug_organization(org_id: str):
     """Debug endpoint to check organization state"""
