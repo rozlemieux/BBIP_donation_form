@@ -170,20 +170,19 @@ def main():
         print(f"Initial has_bb_access_token: {initial_state.get('has_bb_access_token', False)}")
         print(f"Initial has_bb_merchant_id: {initial_state.get('has_bb_merchant_id', False)}")
     
-    # Step 3: Start OAuth flow
+    # Step 3: Start OAuth flow with real credentials
     oauth_success, oauth_data = tester.test_oauth_start()
     
     if not oauth_success:
         print("❌ Cannot proceed with OAuth flow")
         return 1
     
-    # Step 4: Simulate OAuth callback
+    # Step 4: Simulate OAuth callback with real merchant ID
     # In a real scenario, the user would be redirected to Blackbaud and then back to our callback URL
     # Here we're simulating the callback with a test code
     callback_success, callback_data = tester.test_oauth_callback(
         code="test_authorization_code",
-        state=oauth_data.get('state'),
-        merchant_id="test_merchant_123"
+        state=oauth_data.get('state')
     )
     
     # Step 5: Check final organization state
