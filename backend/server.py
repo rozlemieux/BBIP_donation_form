@@ -652,7 +652,7 @@ async def start_bbms_oauth(
         
         # Generate OAuth URL using user's app credentials
         from urllib.parse import urlencode
-        redirect_uri = "https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com/auth/blackbaud/callback"
+        redirect_uri = "https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com/api/auth/blackbaud/callback"
         
         params = {
             "client_id": oauth_data.app_id,
