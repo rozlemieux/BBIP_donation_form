@@ -661,7 +661,7 @@ def main():
     print("Testing with Blackbaud 2025 API Configuration:")
     print(f"- Merchant Account ID: 96563c2e-c97a-4db1-a0ed-1b2a8219f110 (confirmed correct)")
     print(f"- Payments API Subscription Key: e08faf45a0e643e6bfe042a8e4488afb")
-    print(f"- API Endpoint: https://api.sky.blackbaud.com/payments/checkout/sessions")
+    print(f"- API Endpoint: https://api.sky.blackbaud.com/payments (simplified endpoint)")
     print(f"- Environment: Handled by credentials (no more subdomain)")
     print("")
     
@@ -697,7 +697,7 @@ def main():
     # Test 10: Blackbaud API URL configuration (new test for the 2025 fix)
     api_url_ok = tester.test_blackbaud_api_url_configuration()
     
-    # Test 11: Payment checkout session (critical test for the fixed endpoint)
+    # Test 11: Payment checkout session (critical test for the simplified endpoint)
     payment_checkout_ok = tester.test_payment_checkout_session()
     
     # Test 12: Donation status
@@ -740,17 +740,17 @@ def main():
     # Special emphasis on payment checkout and API URL
     if not api_url_ok:
         print("\n❌ CRITICAL FAILURE: Blackbaud API URL is not correctly configured for 2025 API structure!")
-        print("   The base URL should be https://api.sky.blackbaud.com (no more sandbox subdomain).")
+        print("   The base URL should be https://api.sky.blackbaud.com with simplified endpoint /payments.")
     else:
         print("\n✅ CRITICAL TEST PASSED: Blackbaud API URL is correctly configured for 2025 API structure!")
-        print("   The base URL is properly set to https://api.sky.blackbaud.com.")
+        print("   The base URL is properly set to https://api.sky.blackbaud.com with simplified endpoint /payments.")
     
     if not payment_checkout_ok:
         print("\n❌ CRITICAL FAILURE: Payment checkout session creation failed!")
         print("   This is the core functionality that was supposed to be fixed.")
     else:
         print("\n✅ CRITICAL TEST PASSED: Payment checkout session creation works!")
-        print("   The fix for the Blackbaud API endpoint (/payments/checkout/sessions) is working correctly.")
+        print("   The fix for the Blackbaud API endpoint (simplified to /payments) is working correctly.")
     
     print(f"\nOverall Result: {'✅ PASS' if all_passed else '❌ FAIL'}")
     
