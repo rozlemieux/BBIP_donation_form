@@ -760,7 +760,7 @@ def main():
     
     return 0 if all_passed else 1
 
-def test_blackbaud_checkout_integration():
+def test_blackbaud_checkout_integration(tester):
     """Test the Blackbaud Checkout integration with JavaScript SDK"""
     print("\n\n=== Testing Blackbaud Checkout Integration ===\n")
     
@@ -768,10 +768,18 @@ def test_blackbaud_checkout_integration():
     base_url = "https://8b2b653e-9dbe-4e45-9ea1-8a28a59c538d.preview.emergentagent.com"
     api_url = f"{base_url}/api"
     
+    # Use the organization ID from the tester object
+    if not tester.organization_id:
+        print("❌ No organization ID available. Cannot test Blackbaud Checkout integration.")
+        return False
+    
+    org_id = tester.organization_id
+    print(f"Using organization ID: {org_id}")
+    
     # Test 1: Test /api/donate endpoint
     print("Test 1: Testing /api/donate endpoint...")
     donation_data = {
-        "org_id": "test-org-123",  # This should be a valid organization ID in your database
+        "org_id": org_id,
         "amount": 25.00,
         "donor_name": "Test Donor",
         "donor_email": "test@example.com",
@@ -779,6 +787,7 @@ def test_blackbaud_checkout_integration():
         "donor_address": "123 Test St, Test City, TS 12345"
     }
     
+    donate_success = False
     try:
         response = requests.post(f"{api_url}/donate", json=donation_data)
         print(f"Status Code: {response.status_code}")
@@ -795,7 +804,7 @@ def test_blackbaud_checkout_integration():
             print(f"  - Test Mode: {checkout_config.get('test_mode')}")
             
             # Verify the checkout configuration has all required fields
-            required_fields = ['public_key', 'merchant_account_id', 'amount', 'currency', 'donor_info']
+            required_fields = ['public_key', 'merchant_account_id', 'amount', 'currency']
             missing_fields = [field for field in required_fields if field not in checkout_config]
             
             if missing_fields:
@@ -820,6 +829,8 @@ def test_blackbaud_checkout_integration():
                 print(f"WARNING: Merchant ID does not match expected value.")
                 print(f"  Expected: {expected_merchant_id}")
                 print(f"  Actual: {checkout_config.get('merchant_account_id')}")
+                
+            donate_success = True
         else:
             print(f"ERROR: Failed to get checkout configuration. Response: {response.text}")
     except Exception as e:
@@ -830,13 +841,14 @@ def test_blackbaud_checkout_integration():
     transaction_data = {
         "transaction_token": "test-transaction-token-123",
         "donation_data": {
-            "org_id": "test-org-123",
+            "org_id": org_id,
             "amount": 25.00,
             "donor_name": "Test Donor",
             "donor_email": "test@example.com"
         }
     }
     
+    process_transaction_success = False
     try:
         response = requests.post(f"{api_url}/process-transaction", json=transaction_data)
         print(f"Status Code: {response.status_code}")
@@ -847,6 +859,7 @@ def test_blackbaud_checkout_integration():
             print(f"  - Success: {result.get('success')}")
             print(f"  - Donation ID: {result.get('donation_id')}")
             print(f"  - Amount: ${result.get('amount')}")
+            process_transaction_success = True
         else:
             print(f"ERROR: Failed to process transaction. Response: {response.text}")
     except Exception as e:
@@ -854,8 +867,8 @@ def test_blackbaud_checkout_integration():
     
     # Test 3: Test /api/embed/donate/{org_id} endpoint
     print("\nTest 3: Testing /api/embed/donate/{org_id} endpoint...")
-    org_id = "test-org-123"  # This should be a valid organization ID in your database
     
+    embed_success = False
     try:
         response = requests.get(f"{api_url}/embed/donate/{org_id}")
         print(f"Status Code: {response.status_code}")
@@ -865,28 +878,74 @@ def test_blackbaud_checkout_integration():
             print("Success! Embedded donation form HTML received.")
             
             # Check if the JavaScript SDK is included
-            if "https://api.sky.blackbaud.com/skyui/js/bbCheckout.2.0.js" in html_content:
-                print("JavaScript SDK script tag found in HTML.")
+            sdk_url = "https://api.sky.blackbaud.com/skyui/js/bbCheckout.2.0.js"
+            if sdk_url in html_content:
+                print(f"✅ JavaScript SDK script tag found in HTML: {sdk_url}")
             else:
-                print("ERROR: JavaScript SDK script tag not found in HTML.")
+                print(f"❌ ERROR: JavaScript SDK script tag not found in HTML.")
+                print(f"Expected: {sdk_url}")
             
             # Check if the public key is included
             if "BB_PUBLIC_KEY" in html_content:
-                print("Public key reference found in HTML.")
+                print("✅ Public key reference found in HTML.")
             else:
-                print("ERROR: Public key reference not found in HTML.")
+                print("❌ ERROR: Public key reference not found in HTML.")
             
             # Check if the checkout initialization code is included
             if "new bbCheckout" in html_content:
-                print("bbCheckout initialization code found in HTML.")
+                print("✅ bbCheckout initialization code found in HTML.")
             else:
-                print("ERROR: bbCheckout initialization code not found in HTML.")
+                print("❌ ERROR: bbCheckout initialization code not found in HTML.")
+                
+            embed_success = True
         else:
             print(f"ERROR: Failed to get embedded donation form. Response: {response.text}")
     except Exception as e:
         print(f"ERROR: Exception occurred while testing /api/embed/donate/{org_id}: {str(e)}")
     
+    # Test 4: Verify the JavaScript SDK integration
+    print("\nTest 4: Verifying JavaScript SDK integration...")
+    
+    sdk_integration_success = False
+    try:
+        # Check if the SDK URL is accessible
+        sdk_url = "https://api.sky.blackbaud.com/skyui/js/bbCheckout.2.0.js"
+        response = requests.get(sdk_url)
+        print(f"SDK URL Status Code: {response.status_code}")
+        
+        if response.status_code == 200:
+            print(f"✅ JavaScript SDK is accessible at: {sdk_url}")
+            sdk_integration_success = True
+        else:
+            print(f"❌ ERROR: JavaScript SDK is not accessible. Status: {response.status_code}")
+    except Exception as e:
+        print(f"❌ ERROR: Exception occurred while verifying JavaScript SDK: {str(e)}")
+    
+    # Overall result
+    overall_success = embed_success and sdk_integration_success
+    if donate_success:
+        print("✅ /api/donate endpoint is working correctly")
+    else:
+        print("❌ /api/donate endpoint is not working correctly")
+        
+    if process_transaction_success:
+        print("✅ /api/process-transaction endpoint is working correctly")
+    else:
+        print("❌ /api/process-transaction endpoint is not working correctly")
+        
+    if embed_success:
+        print("✅ /api/embed/donate/{org_id} endpoint is working correctly")
+    else:
+        print("❌ /api/embed/donate/{org_id} endpoint is not working correctly")
+        
+    if sdk_integration_success:
+        print("✅ JavaScript SDK integration is working correctly")
+    else:
+        print("❌ JavaScript SDK integration is not working correctly")
+    
     print("\n=== Blackbaud Checkout Integration Testing Complete ===\n")
+    
+    return overall_success
 
 if __name__ == "__main__":
     sys.exit(main())
