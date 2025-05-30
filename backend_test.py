@@ -3,6 +3,7 @@ import json
 import sys
 import time
 from datetime import datetime
+from urllib.parse import urlparse, parse_qs
 
 class OAuthFlowTester:
     def __init__(self, base_url="https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com"):
@@ -95,7 +96,7 @@ class OAuthFlowTester:
         
         return success, response
 
-    def test_oauth_start(self, merchant_id="96563c2e-c97a-4db1-a0ed-1b2a8219f110", app_id="3VuF4BNX72+dClCDheqMN7xPfsu29GKGxdaobEIbWXU=", app_secret="3VuF4BNX72+dClCDheqMN7xPfsu29GKGxdaobEIbWXU="):
+    def test_oauth_start(self, merchant_id="96563c2e-c97a-4db1-a0ed-1b2a8219f110", app_id="2e2c42a7-a2f5-4fd3-a0bc-d4b3b36d8cea", app_secret="3VuF4BNX72+dClCDheqMN7xPfsu29GKGxdaobEIbWXU="):
         """Test starting the OAuth flow with real credentials"""
         if not self.token:
             print("❌ No auth token available")
@@ -103,7 +104,7 @@ class OAuthFlowTester:
             
         print("\n🔄 Starting OAuth flow with real credentials...")
         print(f"Using Merchant ID: {merchant_id}")
-        print(f"Using App ID: {app_id[:10]}...")
+        print(f"Using App ID: {app_id}")
         
         success, response = self.run_test(
             "Start OAuth Flow",
@@ -119,6 +120,15 @@ class OAuthFlowTester:
         
         if success and 'oauth_url' in response:
             print(f"✅ OAuth URL generated: {response['oauth_url']}")
+            
+            # Parse the URL to extract parameters
+            parsed_url = urlparse(response['oauth_url'])
+            query_params = parse_qs(parsed_url.query)
+            
+            print("\nOAuth URL Parameters:")
+            for key, value in query_params.items():
+                print(f"  {key}: {value[0]}")
+                
             return True, response
         else:
             print("❌ Failed to start OAuth flow")
@@ -151,6 +161,49 @@ class OAuthFlowTester:
             print("❌ OAuth callback failed")
             
         return success, response
+        
+    def test_callback_page(self, code="test_code", state="test_state"):
+        """Test the OAuth callback page directly"""
+        callback_url = f"{self.base_url}/auth/blackbaud/callback?code={code}&state={state}"
+        
+        self.tests_run += 1
+        print(f"\n🔍 Testing OAuth Callback Page...")
+        print(f"URL: {callback_url}")
+        
+        try:
+            response = requests.get(callback_url)
+            
+            if response.status_code == 200:
+                self.tests_passed += 1
+                print(f"✅ Passed - Status: {response.status_code}")
+                print("Callback page loaded successfully")
+                
+                # Check if the page contains debug info
+                if "Code: Received" in response.text and "State: Received" in response.text:
+                    print("✅ Debug info showing parameter status found")
+                else:
+                    print("❌ Debug info not found in callback page")
+                
+                # Check if the page stays on callback page (not redirecting)
+                if "Connecting to Blackbaud..." in response.text:
+                    print("✅ Callback page stays on callback page (not redirecting)")
+                else:
+                    print("❌ Callback page might be redirecting")
+                
+                # Check for detailed error handling
+                if "error-details" in response.text:
+                    print("✅ Detailed error handling section found")
+                else:
+                    print("❌ Detailed error handling section not found")
+                
+                return True, response.text
+            else:
+                print(f"❌ Failed - Expected 200, got {response.status_code}")
+                return False, None
+                
+        except Exception as e:
+            print(f"❌ Failed - Error: {str(e)}")
+            return False, {"error": str(e)}
 
 def main():
     tester = OAuthFlowTester()
