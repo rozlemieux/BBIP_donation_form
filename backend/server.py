@@ -1349,7 +1349,7 @@ async def serve_donation_embed(org_id: str):
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Donation Form</title>
         <script src="https://cdn.tailwindcss.com"></script>
-        <script src="https://api.sky.blackbaud.com/skyui/js/bbCheckout.2.0.js"></script>
+        <script src="https://api.sky.blackbaud.com/skyui/js/bbCheckout"></script>
         <style>
             body {{ margin: 0; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; }}
         </style>
