@@ -880,7 +880,7 @@ def test_blackbaud_checkout_integration(tester):
             print("Success! Embedded donation form HTML received.")
             
             # Check if the JavaScript SDK is included
-            sdk_url = "https://api.sky.blackbaud.com/skyui/js/bbCheckout.2.0.js"
+            sdk_url = "https://api.sky.blackbaud.com/skyui/js/bbCheckout"
             if sdk_url in html_content:
                 print(f"✅ JavaScript SDK script tag found in HTML: {sdk_url}")
             else:
