@@ -739,7 +739,8 @@ def main():
         api_url_ok and  # Include the new test
         payment_checkout_ok and 
         donation_status_ok and 
-        transactions_ok
+        transactions_ok and
+        checkout_integration_ok  # Include the checkout integration test
     )
     
     # Special emphasis on payment checkout and API URL
