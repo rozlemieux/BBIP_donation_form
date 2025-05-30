@@ -14,6 +14,9 @@ class BlackbaudOAuthTester:
         self.tests_run = 0
         self.tests_passed = 0
         self.organization_id = None
+        self.merchant_id = None
+        self.bb_access_token = None
+        self.test_mode = True
 
     def run_test(self, name, method, endpoint, expected_status, data=None, headers=None):
         """Run a single API test"""
@@ -31,6 +34,8 @@ class BlackbaudOAuthTester:
                 response = requests.get(url, headers=headers)
             elif method == 'POST':
                 response = requests.post(url, json=data, headers=headers)
+            elif method == 'PUT':
+                response = requests.put(url, json=data, headers=headers)
 
             success = response.status_code == expected_status
             if success:
@@ -173,6 +178,9 @@ class BlackbaudOAuthTester:
             "app_secret": "3VuF4BNX72+dClCDheqMN7xPfsu29GKGxdaobEIbWXU="
         }
         
+        # Store merchant ID for later use
+        self.merchant_id = oauth_data["merchant_id"]
+        
         success, response = self.run_test(
             "Start OAuth Flow",
             "POST",
@@ -215,6 +223,89 @@ class BlackbaudOAuthTester:
             return False
             
         print(f"✅ OAuth URL contains correct redirect URI: {redirect_uri}")
+        return True
+
+    def test_manual_token_setup(self):
+        """Test manual token setup for Blackbaud API"""
+        if not self.token or not self.organization_id or not self.merchant_id:
+            print("❌ Authentication and OAuth start required before testing manual token setup")
+            return False
+            
+        print("\n🔍 Testing manual token setup...")
+        
+        # Use a test access token for Blackbaud API
+        test_access_token = "test_access_token_for_blackbaud_api"
+        self.bb_access_token = test_access_token
+        
+        success, response = self.run_test(
+            "Manual Token Setup",
+            "POST",
+            "organizations/manual-token-test",
+            200,
+            data={
+                "merchant_id": self.merchant_id,
+                "access_token": test_access_token
+            }
+        )
+        
+        if not success:
+            return False
+            
+        print(f"✅ Manual token setup successful")
+        return True
+
+    def test_form_settings_update(self):
+        """Test updating form settings"""
+        if not self.token or not self.organization_id:
+            print("❌ Authentication required before testing form settings update")
+            return False
+            
+        print("\n🔍 Testing form settings update...")
+        
+        form_settings = {
+            "preset_amounts": [25, 50, 100, 250, 500],
+            "custom_amount_enabled": True,
+            "required_fields": ["name", "email"],
+            "organization_description": "Help us make a difference with your donation",
+            "thank_you_message": "Thank you for your generous donation!"
+        }
+        
+        success, response = self.run_test(
+            "Update Form Settings",
+            "PUT",
+            "organizations/form-settings",
+            200,
+            data=form_settings
+        )
+        
+        if not success:
+            return False
+            
+        print(f"✅ Form settings updated successfully")
+        return True
+
+    def test_test_mode_toggle(self):
+        """Test toggling test mode"""
+        if not self.token or not self.organization_id:
+            print("❌ Authentication required before testing test mode toggle")
+            return False
+            
+        print("\n🔍 Testing test mode toggle...")
+        
+        # Ensure we're in test mode for safety
+        success, response = self.run_test(
+            "Set Test Mode",
+            "PUT",
+            "organizations/test-mode",
+            200,
+            data={"test_mode": True}
+        )
+        
+        if not success:
+            return False
+            
+        print(f"✅ Test mode set to TRUE successfully")
+        self.test_mode = True
         return True
 
     def test_embed_route(self):
@@ -289,6 +380,123 @@ class BlackbaudOAuthTester:
         print(f"✅ Preset amounts: {response.get('preset_amounts')}")
         return True
 
+    def test_payment_checkout_session(self):
+        """Test creating a payment checkout session with the fixed endpoint"""
+        if not self.token or not self.organization_id:
+            print("❌ Authentication required before testing payment checkout")
+            return False
+            
+        print("\n🔍 Testing payment checkout session creation...")
+        
+        # First, ensure we have Blackbaud credentials configured
+        if not self.merchant_id or not self.bb_access_token:
+            print("⚠️ No Blackbaud credentials configured, setting up manual credentials...")
+            if not self.test_manual_token_setup():
+                print("❌ Failed to set up manual Blackbaud credentials")
+                return False
+        
+        # Create a test donation request
+        donation_data = {
+            "amount": 25.00,
+            "donor_name": "Test Donor",
+            "donor_email": "testdonor@example.com",
+            "org_id": self.organization_id,
+            "custom_fields": {
+                "source": "api_test",
+                "campaign": "test_campaign"
+            }
+        }
+        
+        success, response = self.run_test(
+            "Create Payment Checkout Session",
+            "POST",
+            "donations/checkout",
+            200,
+            data=donation_data
+        )
+        
+        if not success:
+            print("❌ Payment checkout session creation failed")
+            return False
+            
+        # Check if we got the expected response fields
+        required_fields = ['session_id', 'checkout_url']
+        missing_fields = [field for field in required_fields if field not in response]
+        
+        if missing_fields:
+            print(f"❌ Response missing required fields: {', '.join(missing_fields)}")
+            return False
+            
+        print(f"✅ Payment checkout session created successfully")
+        print(f"✅ Session ID: {response.get('session_id')}")
+        print(f"✅ Checkout URL: {response.get('checkout_url')}")
+        
+        # Store the session ID for potential future use
+        self.session_id = response.get('session_id')
+        
+        return True
+
+    def test_donation_status(self):
+        """Test getting donation status"""
+        if not hasattr(self, 'session_id') or not self.session_id:
+            print("⚠️ No session ID available, skipping donation status test")
+            return True  # Not a failure, just skipped
+            
+        print("\n🔍 Testing donation status retrieval...")
+        
+        success, response = self.run_test(
+            "Get Donation Status",
+            "GET",
+            f"donations/status/{self.session_id}",
+            200
+        )
+        
+        if not success:
+            return False
+            
+        # Check if we got the expected response fields
+        required_fields = ['status', 'amount', 'donor_name']
+        missing_fields = [field for field in required_fields if field not in response]
+        
+        if missing_fields:
+            print(f"❌ Response missing required fields: {', '.join(missing_fields)}")
+            return False
+            
+        print(f"✅ Donation status retrieved successfully")
+        print(f"✅ Status: {response.get('status')}")
+        print(f"✅ Amount: ${response.get('amount')}")
+        print(f"✅ Donor: {response.get('donor_name')}")
+        
+        return True
+
+    def test_organization_transactions(self):
+        """Test getting organization transactions"""
+        if not self.token or not self.organization_id:
+            print("❌ Authentication required before testing organization transactions")
+            return False
+            
+        print("\n🔍 Testing organization transactions retrieval...")
+        
+        success, response = self.run_test(
+            "Get Organization Transactions",
+            "GET",
+            f"organizations/{self.organization_id}/transactions",
+            200
+        )
+        
+        if not success:
+            return False
+            
+        # Check if we got a list of transactions
+        if not isinstance(response, list):
+            print("❌ Expected a list of transactions")
+            return False
+            
+        print(f"✅ Organization transactions retrieved successfully")
+        print(f"✅ Number of transactions: {len(response)}")
+        
+        return True
+
 def main():
     tester = BlackbaudOAuthTester()
     
@@ -309,22 +517,67 @@ def main():
     # Test 4: OAuth start flow
     oauth_start_ok = tester.test_oauth_start_flow()
     
-    # Test 5: Embed route
+    # Test 5: Manual token setup
+    manual_token_ok = tester.test_manual_token_setup()
+    
+    # Test 6: Form settings update
+    form_settings_ok = tester.test_form_settings_update()
+    
+    # Test 7: Test mode toggle
+    test_mode_ok = tester.test_test_mode_toggle()
+    
+    # Test 8: Embed route
     embed_route_ok = tester.test_embed_route()
     
-    # Test 6: Donation form configuration
+    # Test 9: Donation form configuration
     donation_config_ok = tester.test_donation_form_config()
+    
+    # Test 10: Payment checkout session (critical test for the fixed endpoint)
+    payment_checkout_ok = tester.test_payment_checkout_session()
+    
+    # Test 11: Donation status
+    donation_status_ok = tester.test_donation_status()
+    
+    # Test 12: Organization transactions
+    transactions_ok = tester.test_organization_transactions()
     
     # Print summary
     print("\n===== TEST SUMMARY =====")
     print(f"OAuth Callback Route: {'✅ PASS' if callback_route_ok else '❌ FAIL'}")
     print(f"OAuth Callback Parameters: {'✅ PASS' if callback_params_ok else '❌ FAIL'}")
     print(f"OAuth Start Flow: {'✅ PASS' if oauth_start_ok else '❌ FAIL'}")
+    print(f"Manual Token Setup: {'✅ PASS' if manual_token_ok else '❌ FAIL'}")
+    print(f"Form Settings Update: {'✅ PASS' if form_settings_ok else '❌ FAIL'}")
+    print(f"Test Mode Toggle: {'✅ PASS' if test_mode_ok else '❌ FAIL'}")
     print(f"Embed Route: {'✅ PASS' if embed_route_ok else '❌ FAIL'}")
     print(f"Donation Form Config: {'✅ PASS' if donation_config_ok else '❌ FAIL'}")
+    print(f"Payment Checkout Session: {'✅ PASS' if payment_checkout_ok else '❌ FAIL'}")
+    print(f"Donation Status: {'✅ PASS' if donation_status_ok else '❌ FAIL'}")
+    print(f"Organization Transactions: {'✅ PASS' if transactions_ok else '❌ FAIL'}")
     
-    # Overall result
-    all_passed = callback_route_ok and callback_params_ok and oauth_start_ok and embed_route_ok and donation_config_ok
+    # Overall result - payment checkout is critical
+    all_passed = (
+        callback_route_ok and 
+        callback_params_ok and 
+        oauth_start_ok and 
+        manual_token_ok and 
+        form_settings_ok and 
+        test_mode_ok and 
+        embed_route_ok and 
+        donation_config_ok and 
+        payment_checkout_ok and 
+        donation_status_ok and 
+        transactions_ok
+    )
+    
+    # Special emphasis on payment checkout
+    if not payment_checkout_ok:
+        print("\n❌ CRITICAL FAILURE: Payment checkout session creation failed!")
+        print("   This is the core functionality that was supposed to be fixed.")
+    else:
+        print("\n✅ CRITICAL TEST PASSED: Payment checkout session creation works!")
+        print("   The fix for the Blackbaud API endpoint (/payments/checkout/sessions) is working correctly.")
+    
     print(f"\nOverall Result: {'✅ PASS' if all_passed else '❌ FAIL'}")
     
     return 0 if all_passed else 1
