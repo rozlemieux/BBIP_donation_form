@@ -372,25 +372,37 @@ const Dashboard = ({ organization, authToken, setCurrentView }) => {
       <div className="bg-white rounded-lg shadow-sm border p-6">
         <h3 className="text-lg font-medium text-gray-800 mb-4">Quick Actions</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <button className="p-4 border rounded-lg hover:bg-gray-50 text-left">
+          <button 
+            onClick={() => setCurrentView('form-settings')}
+            className="p-4 border rounded-lg hover:bg-gray-50 text-left transition-all hover:border-blue-300"
+          >
             <div className="text-2xl mb-2">⚙️</div>
             <div className="font-medium">Customize Form</div>
             <div className="text-sm text-gray-600">Update donation amounts and fields</div>
           </button>
           
-          <button className="p-4 border rounded-lg hover:bg-gray-50 text-left">
+          <button 
+            onClick={() => setCurrentView('embed-code')}
+            className="p-4 border rounded-lg hover:bg-gray-50 text-left transition-all hover:border-blue-300"
+          >
             <div className="text-2xl mb-2">🔗</div>
             <div className="font-medium">Get Embed Code</div>
             <div className="text-sm text-gray-600">Add donation form to your website</div>
           </button>
           
-          <button className="p-4 border rounded-lg hover:bg-gray-50 text-left">
+          <button 
+            onClick={() => setCurrentView('transactions')}
+            className="p-4 border rounded-lg hover:bg-gray-50 text-left transition-all hover:border-blue-300"
+          >
             <div className="text-2xl mb-2">📊</div>
             <div className="font-medium">View Reports</div>
             <div className="text-sm text-gray-600">Analyze donation trends</div>
           </button>
           
-          <button className="p-4 border rounded-lg hover:bg-gray-50 text-left">
+          <button 
+            onClick={() => setCurrentView('bbms-config')}
+            className="p-4 border rounded-lg hover:bg-gray-50 text-left transition-all hover:border-blue-300"
+          >
             <div className="text-2xl mb-2">💳</div>
             <div className="font-medium">Payment Settings</div>
             <div className="text-sm text-gray-600">Configure BBMS credentials</div>
