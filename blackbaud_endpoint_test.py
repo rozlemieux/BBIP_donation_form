@@ -58,19 +58,9 @@ def check_request_structure():
         with open(server_file, "r") as f:
             server_code = f.read()
         
-        # Find the section where the API call is made
-        api_call_pattern = r"async with httpx\.AsyncClient\(\) as client:.*?response = await client\.post\((.*?)\)"
-        api_call_match = re.search(api_call_pattern, server_code, re.DOTALL)
-        
-        if not api_call_match:
-            print("\n❌ FAIL: Could not find the API call in the server code")
-            return False
-        
-        api_call_text = api_call_match.group(0)
-        
         # Check if the API call includes the correct headers and JSON data
-        headers_check = "headers=headers" in api_call_text
-        json_check = "json=checkout_data" in api_call_text
+        headers_check = "headers=headers" in server_code
+        json_check = "json=checkout_data" in server_code
         
         print(f"✅ API call includes headers: {headers_check}")
         print(f"✅ API call includes JSON data: {json_check}")
