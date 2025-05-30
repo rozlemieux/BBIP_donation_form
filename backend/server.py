@@ -925,6 +925,7 @@ async def oauth_callback_page(code: str = None, state: str = None, error: str = 
                 <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
                 <h2 class="text-xl font-semibold text-gray-800 mb-2">Connecting to Blackbaud...</h2>
                 <p class="text-gray-600">Please wait while we complete the authentication.</p>
+                <div id="debug-info" class="mt-4 text-xs text-gray-500"></div>
             </div>
             
             <div id="success" class="hidden text-center">
@@ -940,6 +941,7 @@ async def oauth_callback_page(code: str = None, state: str = None, error: str = 
                 <div class="text-red-500 text-4xl mb-4">❌</div>
                 <h2 class="text-xl font-semibold text-gray-800 mb-2">Authentication Failed</h2>
                 <p class="text-gray-600 mb-4" id="error-message">Something went wrong during authentication.</p>
+                <div id="error-details" class="text-xs text-gray-500 mb-4"></div>
                 <button onclick="closeWindow()" class="bg-gray-600 text-white px-6 py-2 rounded-md hover:bg-gray-700">
                     Close
                 </button>
@@ -947,20 +949,36 @@ async def oauth_callback_page(code: str = None, state: str = None, error: str = 
         </div>
         
         <script>
+            console.log('Callback page loaded');
+            console.log('Current URL:', window.location.href);
+            
+            // Extract parameters from URL
             const urlParams = new URLSearchParams(window.location.search);
             const code = urlParams.get('code');
             const state = urlParams.get('state');
             const error = urlParams.get('error');
+            
+            console.log('URL Parameters:', {{ code: code ? 'present' : 'missing', state: state ? 'present' : 'missing', error: error }});
+            
+            // Update debug info
+            document.getElementById('debug-info').innerHTML = `
+                Code: ${{code ? 'Received' : 'Missing'}}<br>
+                State: ${{state ? 'Received' : 'Missing'}}<br>
+                Error: ${{error || 'None'}}
+            `;
             
             function showSuccess() {{
                 document.getElementById('loading').classList.add('hidden');
                 document.getElementById('success').classList.remove('hidden');
             }}
             
-            function showError(message) {{
+            function showError(message, details = '') {{
                 document.getElementById('loading').classList.add('hidden');
                 document.getElementById('error').classList.remove('hidden');
                 document.getElementById('error-message').textContent = message;
+                if (details) {{
+                    document.getElementById('error-details').textContent = details;
+                }}
             }}
             
             function closeWindow() {{
@@ -968,35 +986,46 @@ async def oauth_callback_page(code: str = None, state: str = None, error: str = 
                     const success = !document.getElementById('error').classList.contains('hidden');
                     const error = success ? null : document.getElementById('error-message').textContent;
                     
+                    console.log('Notifying parent window:', {{ success, error }});
+                    
                     window.opener.postMessage({{
                         type: 'BLACKBAUD_AUTH_COMPLETE',
                         success: success,
                         error: error
                     }}, '*');
-                    window.close();
+                    
+                    setTimeout(() => {{
+                        window.close();
+                    }}, 100);
                 }} else {{
+                    console.log('No opener window, redirecting to main app');
                     window.location.href = '/';
                 }}
             }}
             
             async function handleCallback() {{
+                console.log('Starting callback handling...');
+                
                 if (error) {{
+                    console.error('OAuth error from Blackbaud:', error);
                     showError(`Authentication error: ${{error}}`);
                     return;
                 }}
                 
                 if (!code || !state) {{
+                    console.error('Missing required parameters:', {{ code: !!code, state: !!state }});
                     showError('Missing authorization code or state parameter.');
                     return;
                 }}
                 
                 try {{
-                    // Extract org_id from state parameter
-                    const stateParts = state.split(':');
-                    const org_id = stateParts[0];
+                    // Get merchant_id from localStorage
+                    const merchant_id = localStorage.getItem('bb_merchant_id') || '96563c2e-c97a-4db1-a0ed-1b2a8219f110';
                     
-                    // Use the merchant_id from localStorage or extract from URL/state
-                    const merchant_id = localStorage.getItem('bb_merchant_id') || 'default';
+                    console.log('Making callback API request...');
+                    console.log('Merchant ID:', merchant_id);
+                    console.log('State:', state.substring(0, 20) + '...');
+                    console.log('Code length:', code.length);
                     
                     const response = await fetch('/api/organizations/bbms-oauth/callback', {{
                         method: 'POST',
@@ -1010,20 +1039,29 @@ async def oauth_callback_page(code: str = None, state: str = None, error: str = 
                         }})
                     }});
                     
+                    console.log('API Response status:', response.status);
+                    
                     if (response.ok) {{
+                        const result = await response.json();
+                        console.log('API Response success:', result);
                         localStorage.removeItem('bb_merchant_id'); // Cleanup
                         showSuccess();
                     }} else {{
                         const errorData = await response.json();
-                        showError(errorData.detail || 'Failed to complete authentication');
+                        console.error('API Response error:', errorData);
+                        showError(
+                            errorData.detail || 'Failed to complete authentication',
+                            `Status: ${{response.status}} - ${{JSON.stringify(errorData)}}`
+                        );
                     }}
                 }} catch (err) {{
-                    console.error('Callback error:', err);
-                    showError('Network error occurred during authentication');
+                    console.error('Network error:', err);
+                    showError('Network error occurred during authentication', err.message);
                 }}
             }}
             
-            // Start the callback handling
+            // Start the callback handling immediately
+            console.log('Starting callback process...');
             handleCallback();
         </script>
     </body>
