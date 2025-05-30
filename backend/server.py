@@ -1415,7 +1415,253 @@ async def get_organization_transactions(
     return transactions
 
 # Embed route for iframe - moved to API prefix to ensure it reaches backend
-@app.get("/api/embed/donate/{org_id}")
+@app.get("/api/embed/test-donate")
+async def serve_test_donation_embed():
+    """Serve test donation form for iframe embedding - works without OAuth2 setup"""
+    public_key = os.environ.get('BB_PUBLIC_KEY')
+    return HTMLResponse(f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Test Donation Form</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://payments.blackbaud.com/checkout/bbCheckoutLoad.js"></script>
+        <style>
+            body {{ margin: 0; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; }}
+        </style>
+    </head>
+    <body>
+        <div id="donation-root" class="max-w-md mx-auto"></div>
+        <script>
+            const API_BASE = 'https://8b2b653e-9dbe-4e45-9ea1-8a28a59c538d.preview.emergentagent.com/api';
+            const BB_PUBLIC_KEY = '{public_key}';
+            
+            // Test donation form implementation - works without OAuth2
+            window.addEventListener('DOMContentLoaded', function() {{
+                renderTestDonationForm();
+            }});
+            
+            function renderTestDonationForm() {{
+                const root = document.getElementById('donation-root');
+                root.innerHTML = `
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-2">Test Organization</h2>
+                        <p class="text-gray-600 mb-6">This is a test donation form demonstrating the Blackbaud Checkout integration.</p>
+                        
+                        <form id="donation-form" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Donation Amount</label>
+                                <div class="grid grid-cols-3 gap-2 mb-3">
+                                    <button type="button" class="amount-btn bg-gray-100 hover:bg-blue-100 border border-gray-300 rounded px-3 py-2 text-sm font-medium" data-amount="25">
+                                        $25
+                                    </button>
+                                    <button type="button" class="amount-btn bg-gray-100 hover:bg-blue-100 border border-gray-300 rounded px-3 py-2 text-sm font-medium" data-amount="50">
+                                        $50
+                                    </button>
+                                    <button type="button" class="amount-btn bg-gray-100 hover:bg-blue-100 border border-gray-300 rounded px-3 py-2 text-sm font-medium" data-amount="100">
+                                        $100
+                                    </button>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <button type="button" id="custom-btn" class="amount-btn bg-gray-100 hover:bg-blue-100 border border-gray-300 rounded px-3 py-2 text-sm font-medium">
+                                        Custom
+                                    </button>
+                                    <input type="number" id="custom-amount" class="hidden flex-1 border border-gray-300 rounded px-3 py-2 text-sm" placeholder="Enter amount" min="1" step="0.01">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                                <input type="text" id="donor-name" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value="Test Donor" placeholder="Enter your full name">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                                <input type="email" id="donor-email" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value="test@example.com" placeholder="Enter your email">
+                            </div>
+                            
+                            <button type="submit" id="donate-btn" class="w-full bg-blue-600 text-white font-medium py-3 px-4 rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                                Donate Now (Test Mode)
+                            </button>
+                        </form>
+                        
+                        <div id="loading" class="hidden text-center py-8">
+                            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                            <p class="mt-2 text-gray-600">Processing your test donation...</p>
+                        </div>
+                        
+                        <div id="success" class="hidden text-center py-8">
+                            <div class="text-green-600 text-4xl mb-4">✓</div>
+                            <h3 class="text-lg font-medium text-gray-800">Test donation successful!</h3>
+                            <p class="text-gray-600 mt-2">This demonstrates the complete payment flow integration.</p>
+                        </div>
+                    </div>
+                `;
+                
+                setupTestFormInteractions();
+            }}
+            
+            function setupTestFormInteractions() {{
+                let selectedAmount = 25; // Default to $25
+                
+                // Pre-select the $25 button
+                const firstBtn = document.querySelector('[data-amount="25"]');
+                if (firstBtn) {{
+                    firstBtn.classList.add('bg-blue-500', 'text-white');
+                }}
+                
+                // Amount button handlers
+                document.querySelectorAll('.amount-btn').forEach(btn => {{
+                    btn.addEventListener('click', function() {{
+                        document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('bg-blue-500', 'text-white'));
+                        this.classList.add('bg-blue-500', 'text-white');
+                        
+                        if (this.id === 'custom-btn') {{
+                            document.getElementById('custom-amount').classList.remove('hidden');
+                            selectedAmount = null;
+                        }} else {{
+                            document.getElementById('custom-amount').classList.add('hidden');
+                            selectedAmount = parseFloat(this.dataset.amount);
+                        }}
+                        updateDonateButton();
+                    }});
+                }});
+                
+                // Custom amount input
+                const customAmountInput = document.getElementById('custom-amount');
+                if (customAmountInput) {{
+                    customAmountInput.addEventListener('input', function() {{
+                        selectedAmount = parseFloat(this.value);
+                        updateDonateButton();
+                    }});
+                }}
+                
+                // Form fields
+                document.getElementById('donor-name').addEventListener('input', updateDonateButton);
+                document.getElementById('donor-email').addEventListener('input', updateDonateButton);
+                
+                // Form submission
+                document.getElementById('donation-form').addEventListener('submit', handleTestDonationSubmit);
+                
+                // Enable button initially
+                updateDonateButton();
+                
+                function updateDonateButton() {{
+                    const name = document.getElementById('donor-name').value.trim();
+                    const email = document.getElementById('donor-email').value.trim();
+                    const donateBtn = document.getElementById('donate-btn');
+                    
+                    const isValid = selectedAmount > 0 && name && email && email.includes('@');
+                    donateBtn.disabled = !isValid;
+                }}
+                
+                async function handleTestDonationSubmit(e) {{
+                    e.preventDefault();
+                    
+                    const donationData = {{
+                        amount: selectedAmount,
+                        donor_name: document.getElementById('donor-name').value.trim(),
+                        donor_email: document.getElementById('donor-email').value.trim(),
+                        org_id: "test-org-id"
+                    }};
+                    
+                    console.log('Starting test donation process with data:', donationData);
+                    
+                    // Show loading
+                    document.getElementById('donation-form').classList.add('hidden');
+                    document.getElementById('loading').classList.remove('hidden');
+                    
+                    try {{
+                        console.log('Step 1: Getting test checkout configuration from backend...');
+                        
+                        // Step 1: Get test checkout configuration
+                        const configResponse = await fetch(`${{API_BASE}}/test-donate`, {{
+                            method: 'POST',
+                            headers: {{
+                                'Content-Type': 'application/json'
+                            }},
+                            body: JSON.stringify(donationData)
+                        }});
+                        
+                        console.log('Config response status:', configResponse.status);
+                        
+                        if (!configResponse.ok) {{
+                            const errorText = await configResponse.text();
+                            console.error('Config response error:', errorText);
+                            throw new Error(`Failed to get checkout configuration: ${{configResponse.status}} - ${{errorText}}`);
+                        }}
+                        
+                        const configResult = await configResponse.json();
+                        console.log('Config result:', configResult);
+                        const checkoutConfig = configResult.checkout_config;
+                        
+                        if (!checkoutConfig) {{
+                            throw new Error('No checkout configuration received from server');
+                        }}
+                        
+                        console.log('Step 2: Testing Blackbaud Checkout SDK integration...');
+                        console.log('bbCheckout available:', typeof bbCheckout);
+                        console.log('window.bbCheckout available:', typeof window.bbCheckout);
+                        
+                        // For demonstration, we'll simulate a successful payment
+                        // In production, this would open the actual Blackbaud checkout modal
+                        console.log('Step 3: Simulating Blackbaud checkout process...');
+                        
+                        // Simulate checkout process
+                        setTimeout(() => {{
+                            const mockTransactionToken = 'test_token_' + Date.now();
+                            handleTestPaymentSuccess(mockTransactionToken, donationData);
+                        }}, 2000);
+                        
+                    }} catch (error) {{
+                        console.error('Test donation initialization failed:', error);
+                        alert(`Failed to initialize test payment: ${{error.message}}`);
+                        
+                        // Show form again
+                        document.getElementById('loading').classList.add('hidden');
+                        document.getElementById('donation-form').classList.remove('hidden');
+                    }}
+                }}
+                
+                async function handleTestPaymentSuccess(transactionToken, donationData) {{
+                    try {{
+                        console.log('Processing test transaction token:', transactionToken);
+                        
+                        // Process the test transaction token
+                        const response = await fetch(`${{API_BASE}}/test-process-transaction`, {{
+                            method: 'POST',
+                            headers: {{
+                                'Content-Type': 'application/json'
+                            }},
+                            body: JSON.stringify({{
+                                transaction_token: transactionToken,
+                                donation_data: donationData
+                            }})
+                        }});
+                        
+                        if (!response.ok) {{
+                            throw new Error('Failed to process transaction');
+                        }}
+                        
+                        const result = await response.json();
+                        console.log('Test donation completed successfully:', result);
+                        
+                        // Show success message
+                        document.getElementById('loading').classList.add('hidden');
+                        document.getElementById('success').classList.remove('hidden');
+                        
+                    }} catch (error) {{
+                        console.error('Test transaction processing failed:', error);
+                        alert('Test payment processing failed. Check console for details.');
+                    }}
+                }}
+            }}
+        </script>
+    </body>
+    </html>
+    """)
 async def serve_donation_embed(org_id: str):
     """Serve donation form for iframe embedding with Blackbaud JavaScript SDK"""
     public_key = os.environ.get('BB_PUBLIC_KEY')
