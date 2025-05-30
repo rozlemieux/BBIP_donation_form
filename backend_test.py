@@ -171,9 +171,9 @@ class BlackbaudOAuthTester:
             
         print("\n🔍 Testing OAuth start flow...")
         
-        # Test data for OAuth start
+        # Test data for OAuth start - Using the correct merchant ID from the review request
         oauth_data = {
-            "merchant_id": "96563c2e-c97a-4db1-a0ed-1b2a8219f110",
+            "merchant_id": "96563c2e-c97a-4db1-a0ed-1b2a8219f110",  # Confirmed correct merchant ID
             "app_id": "2e2c42a7-a2f5-4fd3-a0bc-d4b3b36d8cea",
             "app_secret": "3VuF4BNX72+dClCDheqMN7xPfsu29GKGxdaobEIbWXU="
         }
