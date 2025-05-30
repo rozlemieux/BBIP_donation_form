@@ -214,7 +214,7 @@ JWT_SECRET = os.environ.get('JWT_SECRET', 'fallback_secret')
 ALGORITHM = "HS256"
 
 # Blackbaud Configuration
-BB_BASE_URL = "https://api.sandbox.sky.blackbaud.com" if os.environ.get('BB_ENVIRONMENT') == 'sandbox' else "https://api.sky.blackbaud.com"
+BB_BASE_URL = "https://api.sky.blackbaud.com" # Blackbaud API base URL (sandbox is handled via headers)
 BB_OAUTH_URL = "https://oauth2.sky.blackbaud.com"
 
 # Encryption setup
