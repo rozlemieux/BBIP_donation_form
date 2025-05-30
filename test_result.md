@@ -177,20 +177,20 @@ backend:
         agent: "testing"
         comment: "Tested the simplified endpoint structure (/payments instead of /payments/checkout/sessions) as requested. The code in server.py has been updated to use the simplified endpoint, but we're still getting 404 errors. We tested both direct GET and POST requests to https://api.sky.blackbaud.com/payments with the correct merchant ID (96563c2e-c97a-4db1-a0ed-1b2a8219f110) and subscription key (e08faf45a0e643e6bfe042a8e4488afb), but all returned 404 'Resource not found' errors. Web searches for the current Blackbaud API structure did not provide definitive information about the correct endpoint. This suggests that either the Blackbaud API endpoint structure is different from both /payments and /payments/checkout/sessions, or we need additional authentication/authorization to access the endpoint."
 
-  - task: "Blackbaud JavaScript SDK Integration"
+  - task: "Blackbaud Checkout Integration"
     implemented: true
-    working: true
+    working: false
     file: "/app/backend/server.py"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
     needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
-        comment: "Blackbaud JavaScript SDK integration is implemented in server.py"
-      - working: true
+        comment: "Blackbaud Checkout integration is implemented in server.py"
+      - working: false
         agent: "testing"
-        comment: "The Blackbaud JavaScript SDK integration is working correctly. The embedded donation form at /api/embed/donate/{org_id} successfully loads the JavaScript SDK from https://api.sky.blackbaud.com/skyui/js/bbCheckout.2.0.js and initializes it with the correct public key. The form contains the necessary JavaScript code to handle the checkout process and submit the transaction token to the backend."
+        comment: "The Blackbaud Checkout integration is partially working. The embedded donation form at /api/embed/donate/{org_id} successfully loads and includes the JavaScript SDK URL (https://api.sky.blackbaud.com/skyui/js/bbCheckout.2.0.js), the public key reference, and the bbCheckout initialization code. However, the JavaScript SDK URL itself returns a 404 error when accessed directly, suggesting that the SDK URL might have changed or is not publicly accessible. Additionally, the /api/donate and /api/process-transaction endpoints return 400 errors with the message 'Organization has not configured Blackbaud BBMS access', indicating that the organization needs proper Blackbaud OAuth2 configuration. The JavaScript SDK approach is a good workaround for the REST API issues, but it still requires proper organization configuration and a valid SDK URL."
 
 frontend:
   - task: "Frontend Integration"
