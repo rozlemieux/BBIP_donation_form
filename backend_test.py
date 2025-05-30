@@ -124,13 +124,15 @@ class OAuthFlowTester:
             print("❌ Failed to start OAuth flow")
             return False, response
 
-    def test_oauth_callback(self, code="test_code", state=None, merchant_id="test_merchant_123"):
-        """Test the OAuth callback"""
+    def test_oauth_callback(self, code="test_code", state=None, merchant_id="96563c2e-c97a-4db1-a0ed-1b2a8219f110"):
+        """Test the OAuth callback with real merchant ID"""
         if not state:
             print("❌ No state parameter available")
             return False, None
             
-        print("\n🔄 Testing OAuth callback...")
+        print("\n🔄 Testing OAuth callback with real merchant ID...")
+        print(f"Using Merchant ID: {merchant_id}")
+        
         success, response = self.run_test(
             "OAuth Callback",
             "POST",
