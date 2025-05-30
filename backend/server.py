@@ -1068,6 +1068,118 @@ async def toggle_test_mode(
     mode_text = "test" if toggle_data.test_mode else "production"
     return {"message": f"Switched to {mode_text} mode successfully"}
 
+@app.post("/api/donate")
+async def create_donation(donation: DonationRequest, authorization: str = Header(None)):
+    """Create a donation and return checkout configuration for frontend JavaScript SDK"""
+    try:
+        # Extract organization ID from JWT token if present
+        organization_id = None
+        if authorization and authorization.startswith("Bearer "):
+            try:
+                token = authorization.split(" ")[1]
+                payload = jwt.decode(token, JWT_SECRET, algorithms=[ALGORITHM])
+                organization_id = payload.get("sub")
+            except JWTError:
+                pass
+        
+        # If no valid token, extract from donation request
+        if not organization_id:
+            organization_id = donation.org_id
+        
+        if not organization_id:
+            raise HTTPException(400, "Organization ID required")
+        
+        # Get organization
+        org = await db["organizations"].find_one({"id": organization_id})
+        if not org:
+            raise HTTPException(404, "Organization not found")
+        
+        bbms_config = org.get("bbms_config", {})
+        encrypted_access_token = bbms_config.get("access_token")
+        
+        if not encrypted_access_token:
+            raise HTTPException(400, "Organization has not configured Blackbaud BBMS access")
+        
+        # Decrypt the access token
+        access_token = decrypt_data(encrypted_access_token)
+        
+        # Get the merchant ID from environment
+        merchant_id = os.environ.get('BB_MERCHANT_ACCOUNT_ID')
+        
+        # Create checkout configuration for frontend
+        checkout_config = await bb_client.create_payment_checkout(
+            donation, merchant_id, access_token, test_mode=True
+        )
+        
+        return {
+            "success": True,
+            "checkout_config": checkout_config,
+            "message": "Checkout configuration created. Use the JavaScript SDK to complete payment."
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error in create_donation: {str(e)}")
+        raise HTTPException(500, f"Internal server error: {str(e)}")
+
+
+@app.post("/api/process-transaction")
+async def process_transaction(
+    request: dict,
+    authorization: str = Header(None)
+):
+    """Process a completed Blackbaud checkout transaction token"""
+    try:
+        # Extract organization ID from JWT token
+        organization_id = None
+        if authorization and authorization.startswith("Bearer "):
+            try:
+                token = authorization.split(" ")[1]
+                payload = jwt.decode(token, JWT_SECRET, algorithms=[ALGORITHM])
+                organization_id = payload.get("sub")
+            except JWTError:
+                raise HTTPException(401, "Invalid authentication token")
+        
+        # Extract data from request
+        transaction_token = request.get("transaction_token")
+        donation_data = request.get("donation_data", {})
+        
+        if not transaction_token:
+            raise HTTPException(400, "Transaction token is required")
+        
+        if not organization_id:
+            organization_id = donation_data.get("org_id")
+            
+        if not organization_id:
+            raise HTTPException(400, "Organization ID required")
+        
+        # Get organization and access token
+        org = await db["organizations"].find_one({"id": organization_id})
+        if not org:
+            raise HTTPException(404, "Organization not found")
+        
+        bbms_config = org.get("bbms_config", {})
+        encrypted_access_token = bbms_config.get("access_token")
+        
+        if not encrypted_access_token:
+            raise HTTPException(400, "Organization has not configured Blackbaud BBMS access")
+        
+        access_token = decrypt_data(encrypted_access_token)
+        
+        # Process the transaction token
+        result = await bb_client.process_transaction_token(
+            transaction_token, organization_id, access_token, donation_data
+        )
+        
+        return result
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error in process_transaction: {str(e)}")
+        raise HTTPException(500, f"Internal server error: {str(e)}")
+
 @api_router.post("/donations/checkout")
 async def create_donation_checkout(donation: DonationRequest):
     """Create a checkout session for donation"""
