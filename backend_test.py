@@ -708,7 +708,7 @@ def main():
     
     # Test 14: Blackbaud Checkout Integration with JavaScript SDK
     print("\nRunning Blackbaud Checkout Integration Test...")
-    test_blackbaud_checkout_integration()
+    checkout_integration_ok = test_blackbaud_checkout_integration(tester)
     
     # Print summary
     print("\n===== TEST SUMMARY =====")
@@ -724,6 +724,7 @@ def main():
     print(f"Payment Checkout Session: {'✅ PASS' if payment_checkout_ok else '❌ FAIL'}")
     print(f"Donation Status: {'✅ PASS' if donation_status_ok else '❌ FAIL'}")
     print(f"Organization Transactions: {'✅ PASS' if transactions_ok else '❌ FAIL'}")
+    print(f"Blackbaud Checkout Integration: {'✅ PASS' if checkout_integration_ok else '❌ FAIL'}")
     
     # Overall result - payment checkout is critical
     all_passed = (
