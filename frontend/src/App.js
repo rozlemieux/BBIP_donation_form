@@ -559,7 +559,7 @@ const BBMSConfig = ({ organization, authToken, onUpdate }) => {
   const [credentials, setCredentials] = useState({
     merchant_id: '96563c2e-c97a-4db1-a0ed-1b2a8219f110',
     access_token: '',
-    app_id: '3VuF4BNX72+dClCDheqMN7xPfsu29GKGxdaobEIbWXU=',
+    app_id: '2e2c42a7-a2f5-4fd3-a0bc-d4b3b36d8cea',
     app_secret: '3VuF4BNX72+dClCDheqMN7xPfsu29GKGxdaobEIbWXU='
   });
   const [loading, setLoading] = useState(false);
