@@ -441,132 +441,88 @@ class BlackbaudOAuthTester:
                 print("❌ Failed to set up manual Blackbaud credentials")
                 return False
         
-        # Create a test donation request
-        donation_data = {
-            "amount": 25.00,
-            "donor_name": "Test Donor",
-            "donor_email": "testdonor@example.com",
-            "org_id": self.organization_id,
-            "custom_fields": {
-                "source": "api_test",
-                "campaign": "test_campaign"
-            }
-        }
+        # Ensure we're using the correct merchant ID and public key from the requirements
+        if self.merchant_id != "96563c2e-c97a-4db1-a0ed-1b2a8219f110":
+            print("⚠️ Setting merchant ID to the required value: 96563c2e-c97a-4db1-a0ed-1b2a8219f110")
+            self.merchant_id = "96563c2e-c97a-4db1-a0ed-1b2a8219f110"
         
-        print("🔍 Testing with simplified 2025 API structure...")
-        print(f"🔍 Using merchant ID: {self.merchant_id}")
-        print(f"🔍 Using subscription key: e08faf45a0e643e6bfe042a8e4488afb")
+        # Test with multiple donation amounts as specified in the requirements
+        test_amounts = [25.00, 50.00, 100.00]
+        all_successful = True
         
-        # First, let's test the simplified payments endpoint directly
-        try:
-            print("\n🔍 Testing simplified payments endpoint directly...")
-            headers = {
-                "Bb-Api-Subscription-Key": "e08faf45a0e643e6bfe042a8e4488afb",
-                "Content-Type": "application/json"
-            }
+        for amount in test_amounts:
+            print(f"\n🔍 Testing donation amount: ${amount:.2f}")
             
-            # Try the simplified payments endpoint
-            payments_url = "https://api.sky.blackbaud.com/payments"
-            print(f"Making GET request to simplified payments URL: {payments_url}")
-            
-            payments_response = requests.get(
-                payments_url,
-                headers=headers,
-                timeout=30.0
-            )
-            
-            print(f"Simplified payments endpoint GET response: {payments_response.status_code}")
-            if payments_response.status_code == 200:
-                print("✅ Simplified payments endpoint is accessible via GET!")
-                print(f"Response: {payments_response.text[:200]}...")  # Show first 200 chars
-            elif payments_response.status_code == 404:
-                print("❌ Simplified payments endpoint returned 404 - This might be expected for GET method")
-                print("🔍 Will try POST method through our API")
-            else:
-                print(f"❌ Failed to access simplified payments endpoint via GET: {payments_response.text}")
-                
-            # Try a direct POST to the simplified endpoint with minimal data
-            print(f"\n🔍 Testing direct POST to simplified payments endpoint: {payments_url}")
-            
-            # Create minimal test payload
-            test_payload = {
-                "merchant_account_id": self.merchant_id,
-                "amount": {
-                    "value": 500,  # $5.00
-                    "currency": "USD"
-                },
-                "return_url": "https://8b2b653e-9dbe-4e45-9ea1-8a28a59c538d.preview.emergentagent.com/success",
-                "cancel_url": "https://8b2b653e-9dbe-4e45-9ea1-8a28a59c538d.preview.emergentagent.com/cancel",
-                "metadata": {
-                    "donor_email": "direct_test@example.com",
-                    "donor_name": "Direct Test",
-                    "test_mode": "true"
+            # Create a test donation request
+            donation_data = {
+                "amount": amount,
+                "donor_name": "Test Donor",
+                "donor_email": "testdonor@example.com",
+                "org_id": self.organization_id,
+                "custom_fields": {
+                    "source": "api_test",
+                    "campaign": "test_campaign"
                 }
             }
             
-            # We don't have a valid access token for direct testing, so this will likely fail with 401
-            # But it helps us confirm if the endpoint exists (401 vs 404)
-            direct_response = requests.post(
-                payments_url,
-                headers=headers,
-                json=test_payload,
-                timeout=30.0
+            print(f"🔍 Using merchant ID: {self.merchant_id}")
+            print(f"🔍 Using subscription key: e08faf45a0e643e6bfe042a8e4488afb")
+            
+            # Test the checkout endpoint through our API
+            success, response = self.run_test(
+                f"Create Payment Checkout Session (${amount:.2f})",
+                "POST",
+                "donate",
+                200,
+                data=donation_data
             )
             
-            print(f"Direct POST to simplified payments endpoint response: {direct_response.status_code}")
-            if direct_response.status_code == 201 or direct_response.status_code == 200:
-                print("✅ Direct POST to simplified payments endpoint succeeded!")
-                print(f"Response: {direct_response.text[:200]}...")
-            elif direct_response.status_code == 401:
-                print("⚠️ Direct POST returned 401 Unauthorized - This is expected without a valid token")
-                print("✅ This confirms the endpoint exists but requires authentication")
-            elif direct_response.status_code == 404:
-                print("❌ Direct POST returned 404 Not Found - The simplified endpoint may not exist")
-            else:
-                print(f"⚠️ Direct POST returned unexpected status: {direct_response.status_code}")
-                print(f"Response: {direct_response.text[:200]}...")
+            if not success:
+                print(f"❌ Payment checkout session creation failed for amount ${amount:.2f}")
+                all_successful = False
+                continue
                 
-        except Exception as e:
-            print(f"❌ Error testing simplified payments endpoint directly: {e}")
-        
-        # Now test the checkout endpoint through our API
-        success, response = self.run_test(
-            "Create Payment Checkout Session",
-            "POST",
-            "donations/checkout",
-            200,
-            data=donation_data
-        )
-        
-        if not success:
-            print("❌ Payment checkout session creation failed")
-            # Try to get more detailed error information
-            try:
-                error_url = f"{self.api_url}/debug/organization/{self.organization_id}"
-                debug_response = requests.get(error_url)
-                if debug_response.status_code == 200:
-                    debug_data = debug_response.json()
-                    print(f"📋 Organization debug info: {json.dumps(debug_data, indent=2)}")
-            except Exception as e:
-                print(f"Failed to get debug info: {str(e)}")
-            return False
+            # Check if we got the expected response fields
+            checkout_config = response.get('checkout_config', {})
             
-        # Check if we got the expected response fields
-        required_fields = ['session_id', 'checkout_url']
-        missing_fields = [field for field in required_fields if field not in response]
-        
-        if missing_fields:
-            print(f"❌ Response missing required fields: {', '.join(missing_fields)}")
-            return False
+            # Verify the checkout configuration has all required fields
+            required_fields = ['public_key', 'merchant_account_id', 'amount', 'currency']
+            missing_fields = [field for field in required_fields if field not in checkout_config]
             
-        print(f"✅ Payment checkout session created successfully")
-        print(f"✅ Session ID: {response.get('session_id')}")
-        print(f"✅ Checkout URL: {response.get('checkout_url')}")
+            if missing_fields:
+                print(f"❌ Response missing required fields: {', '.join(missing_fields)}")
+                all_successful = False
+                continue
+                
+            # Verify the public key matches the expected value
+            expected_public_key = "737471a1-1e7e-40ab-aa3a-97d0fb806e6f"
+            if checkout_config.get('public_key') == expected_public_key:
+                print(f"✅ Public key matches expected value: {expected_public_key}")
+            else:
+                print(f"⚠️ Public key does not match expected value.")
+                print(f"  Expected: {expected_public_key}")
+                print(f"  Actual: {checkout_config.get('public_key')}")
+                
+            # Verify the merchant ID matches the expected value
+            expected_merchant_id = "96563c2e-c97a-4db1-a0ed-1b2a8219f110"
+            if checkout_config.get('merchant_account_id') == expected_merchant_id:
+                print(f"✅ Merchant ID matches expected value: {expected_merchant_id}")
+            else:
+                print(f"⚠️ Merchant ID does not match expected value.")
+                print(f"  Expected: {expected_merchant_id}")
+                print(f"  Actual: {checkout_config.get('merchant_account_id')}")
+                
+            # Verify the amount matches what we sent
+            if checkout_config.get('amount') == amount:
+                print(f"✅ Amount matches expected value: ${amount:.2f}")
+            else:
+                print(f"⚠️ Amount does not match expected value.")
+                print(f"  Expected: ${amount:.2f}")
+                print(f"  Actual: ${checkout_config.get('amount')}")
+                
+            print(f"✅ Payment checkout session created successfully for amount ${amount:.2f}")
         
-        # Store the session ID for potential future use
-        self.session_id = response.get('session_id')
-        
-        return True
+        return all_successful
 
     def test_donation_status(self):
         """Test getting donation status"""
