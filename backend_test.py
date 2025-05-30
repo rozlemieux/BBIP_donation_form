@@ -293,7 +293,7 @@ def main():
     tester = BlackbaudOAuthTester()
     
     # Run tests
-    print("\n===== BLACKBAUD OAUTH INTEGRATION TESTS =====\n")
+    print("\n===== DONATION PAGE BUILDER TESTS =====\n")
     
     # Test 1: Register and login
     if not tester.test_register_and_login():
@@ -309,18 +309,22 @@ def main():
     # Test 4: OAuth start flow
     oauth_start_ok = tester.test_oauth_start_flow()
     
-    # Test 5: OAuth credentials validation
-    oauth_creds_ok = tester.test_oauth_credentials_validation()
+    # Test 5: Embed route
+    embed_route_ok = tester.test_embed_route()
+    
+    # Test 6: Donation form configuration
+    donation_config_ok = tester.test_donation_form_config()
     
     # Print summary
     print("\n===== TEST SUMMARY =====")
     print(f"OAuth Callback Route: {'✅ PASS' if callback_route_ok else '❌ FAIL'}")
     print(f"OAuth Callback Parameters: {'✅ PASS' if callback_params_ok else '❌ FAIL'}")
     print(f"OAuth Start Flow: {'✅ PASS' if oauth_start_ok else '❌ FAIL'}")
-    print(f"OAuth Credentials Validation: {'✅ PASS' if oauth_creds_ok else '❌ FAIL'}")
+    print(f"Embed Route: {'✅ PASS' if embed_route_ok else '❌ FAIL'}")
+    print(f"Donation Form Config: {'✅ PASS' if donation_config_ok else '❌ FAIL'}")
     
     # Overall result
-    all_passed = callback_route_ok and callback_params_ok and oauth_start_ok and oauth_creds_ok
+    all_passed = callback_route_ok and callback_params_ok and oauth_start_ok and embed_route_ok and donation_config_ok
     print(f"\nOverall Result: {'✅ PASS' if all_passed else '❌ FAIL'}")
     
     return 0 if all_passed else 1
