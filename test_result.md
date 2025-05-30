@@ -191,6 +191,9 @@ backend:
       - working: false
         agent: "testing"
         comment: "The Blackbaud Checkout integration is partially working. The embedded donation form at /api/embed/donate/{org_id} successfully loads and includes the JavaScript SDK URL (https://api.sky.blackbaud.com/skyui/js/bbCheckout.2.0.js), the public key reference, and the bbCheckout initialization code. However, the JavaScript SDK URL itself returns a 404 error when accessed directly, suggesting that the SDK URL might have changed or is not publicly accessible. Additionally, the /api/donate and /api/process-transaction endpoints return 400 errors with the message 'Organization has not configured Blackbaud BBMS access', indicating that the organization needs proper Blackbaud OAuth2 configuration. The JavaScript SDK approach is a good workaround for the REST API issues, but it still requires proper organization configuration and a valid SDK URL."
+      - working: false
+        agent: "testing"
+        comment: "Updated the JavaScript SDK URL from 'https://api.sky.blackbaud.com/skyui/js/bbCheckout.2.0.js' to 'https://api.sky.blackbaud.com/skyui/js/bbCheckout' based on web search results. However, the SDK URL still returns a 404 error when accessed directly. The /api/donate and /api/process-transaction endpoints still return 400 errors with the message 'Organization has not configured Blackbaud BBMS access'. The organization needs proper Blackbaud OAuth2 configuration with valid access tokens to use these endpoints. The JavaScript SDK approach is a good workaround for the REST API issues, but it still requires proper organization configuration and a valid SDK URL."
 
 frontend:
   - task: "Frontend Integration"
