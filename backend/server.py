@@ -29,6 +29,12 @@ db = client[os.environ['DB_NAME']]
 app = FastAPI(title="Donation Page Builder API")
 api_router = APIRouter(prefix="/api")
 
+# Test endpoint to verify API router is working
+@api_router.get("/test-callback")
+async def test_callback_route():
+    """Test callback route"""
+    return {"message": "Test callback route is working"}
+
 # OAuth callback route - Move to API prefix to ensure it reaches backend
 @api_router.get("/blackbaud-callback")
 async def oauth_callback_page(code: str = None, state: str = None, error: str = None):
