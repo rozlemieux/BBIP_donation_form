@@ -1085,8 +1085,8 @@ async def get_organization_transactions(
     transactions = await db.transactions.find({"org_id": org_id}).sort("created_at", -1).to_list(100)
     return transactions
 
-# Embed route for iframe
-@app.get("/embed/donate/{org_id}")
+# Embed route for iframe - moved to API prefix to ensure it reaches backend
+@app.get("/api/embed/donate/{org_id}")
 async def serve_donation_embed(org_id: str):
     """Serve donation form for iframe embedding"""
     return HTMLResponse(f"""
