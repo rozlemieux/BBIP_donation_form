@@ -472,14 +472,15 @@ class BlackbaudClient:
     async def create_payment_checkout(self, donation: DonationRequest, merchant_id: str, access_token: str, test_mode: bool = True) -> Dict:
         """Create a payment checkout session"""
         try:
-            base_url = "https://api.sky.blackbaud.com/sandbox" if test_mode else "https://api.sky.blackbaud.com"
+            # Use the correct API base URL - sandbox uses same base URL
+            base_url = "https://api.sky.blackbaud.com"
             headers = {
                 "Bb-Api-Subscription-Key": self.payment_subscription_key,
                 "Authorization": f"Bearer {access_token}",
                 "Content-Type": "application/json"
             }
             
-            # Use test URLs for sandbox environment
+            # Use test URLs for return/cancel URLs
             return_url = f"https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com/success"
             cancel_url = f"https://c44b0daf-083b-41cc-aa42-f9e46f580f6f.preview.emergentagent.com/cancel"
             
@@ -501,6 +502,8 @@ class BlackbaudClient:
             
             mode_text = "sandbox" if test_mode else "production"
             logging.info(f"Creating checkout in {mode_text} mode for ${donation.amount}")
+            logging.info(f"Request URL: {base_url}/payments/v1/checkouts")
+            logging.info(f"Merchant ID: {merchant_id}")
             
             async with httpx.AsyncClient() as client:
                 response = await client.post(
@@ -510,9 +513,22 @@ class BlackbaudClient:
                     timeout=30.0
                 )
                 
+                logging.info(f"Blackbaud API Response: {response.status_code}")
+                
                 if response.status_code != 201:
-                    logging.error(f"Checkout creation failed: {response.status_code} - {response.text}")
-                    raise HTTPException(400, f"Failed to create checkout: {response.text}")
+                    error_text = response.text
+                    logging.error(f"Checkout creation failed: {response.status_code} - {error_text}")
+                    
+                    # Try to parse the error response
+                    try:
+                        error_data = response.json()
+                        error_message = error_data.get('message', 'Unknown error')
+                        if 'not found' in error_message.lower():
+                            raise HTTPException(400, f"Blackbaud API endpoint not found. Please check the payment subscription key and API access.")
+                        else:
+                            raise HTTPException(400, f"Blackbaud error: {error_message}")
+                    except:
+                        raise HTTPException(400, f"Failed to create checkout: {error_text}")
                 
                 checkout_response = response.json()
                 logging.info(f"Checkout created successfully: {checkout_response.get('id')} in {mode_text} mode")
