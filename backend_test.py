@@ -706,6 +706,10 @@ def main():
     # Test 13: Organization transactions
     transactions_ok = tester.test_organization_transactions()
     
+    # Test 14: Blackbaud Checkout Integration with JavaScript SDK
+    print("\nRunning Blackbaud Checkout Integration Test...")
+    test_blackbaud_checkout_integration()
+    
     # Print summary
     print("\n===== TEST SUMMARY =====")
     print(f"OAuth Callback Route: {'✅ PASS' if callback_route_ok else '❌ FAIL'}")
