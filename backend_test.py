@@ -233,8 +233,47 @@ class BlackbaudOAuthTester:
             
         print("\n🔍 Testing manual token setup...")
         
-        # Use a test access token for Blackbaud API
-        test_access_token = "test_access_token_for_blackbaud_api"
+        # Use a test access token for Blackbaud API - create an encrypted token
+        import base64
+        import os
+        from cryptography.fernet import Fernet
+        
+        # Generate a mock encrypted token that simulates a real OAuth2 token
+        try:
+            # Use the ENCRYPTION_KEY from .env if available, or create a test key
+            encryption_key = os.environ.get('ENCRYPTION_KEY', 'YourEncryptionKeyHere32BytesLong!')
+            
+            # Ensure the key is 32 bytes for Fernet
+            if len(encryption_key) < 32:
+                encryption_key = encryption_key.ljust(32, '!')
+            encryption_key = encryption_key[:32]
+            
+            # Create a Fernet key from the encryption key
+            fernet_key = base64.urlsafe_b64encode(encryption_key.encode())
+            cipher = Fernet(fernet_key)
+            
+            # Create a mock token with realistic structure
+            mock_token_data = {
+                "access_token": "mock_access_token_for_blackbaud_api",
+                "refresh_token": "mock_refresh_token_for_blackbaud_api",
+                "token_type": "bearer",
+                "expires_in": 3600,
+                "scope": "donation-form-read donation-form-write"
+            }
+            
+            # Convert to string and encrypt
+            import json
+            token_str = json.dumps(mock_token_data)
+            encrypted_token = cipher.encrypt(token_str.encode()).decode()
+            
+            print(f"✅ Created encrypted mock token for testing")
+            test_access_token = encrypted_token
+            
+        except Exception as e:
+            print(f"⚠️ Error creating encrypted token: {str(e)}")
+            print(f"⚠️ Using plain text token instead")
+            test_access_token = "test_access_token_for_blackbaud_api"
+        
         self.bb_access_token = test_access_token
         
         # Verify we're using the correct merchant ID
