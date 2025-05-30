@@ -107,51 +107,63 @@ user_problem_statement: "Test the Donation Page Builder application backend with
 backend:
   - task: "Organization Registration and Login"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Organization registration and login endpoints are implemented in server.py"
+      - working: true
+        agent: "testing"
+        comment: "Organization registration and login endpoints are working correctly. Successfully tested registration with a new organization and login with the created credentials."
 
   - task: "OAuth2 Flow Endpoints"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "OAuth2 flow endpoints are implemented in server.py"
+      - working: true
+        agent: "testing"
+        comment: "OAuth2 flow endpoints are working correctly. Successfully tested the authorization endpoint which returns the correct authorization URL. The callback endpoint was tested with a mock code and behaves as expected."
 
   - task: "Form Customization Endpoints"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Form customization endpoints are implemented in server.py"
+      - working: true
+        agent: "testing"
+        comment: "Form customization endpoints are working correctly. Successfully tested creating, updating, and retrieving donation forms with custom settings."
 
   - task: "Donation Checkout Endpoint"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Donation checkout endpoint has been updated to use /payments/checkout/sessions instead of /payments/v1/checkouts"
+      - working: true
+        agent: "testing"
+        comment: "The Blackbaud payment API endpoint has been successfully updated from `/payments/v1/checkouts` to `/payments/checkout/sessions`. The request structure is correct, including the headers and JSON data. The checkout data structure is correct, including all the required fields (merchant_account_id, amount with value and currency, return_url, cancel_url, and metadata with donor information)."
 
 frontend:
   - task: "Frontend Integration"
