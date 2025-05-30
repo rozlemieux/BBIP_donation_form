@@ -1250,8 +1250,176 @@ async def serve_donation_embed(org_id: str):
     </html>
     """)
 
-# Include router in app
+# Include API router in app with higher priority
 app.include_router(api_router)
+
+# OAuth callback route - must be BEFORE the catch-all frontend route
+@app.get("/auth/blackbaud/callback")
+async def oauth_callback_page(code: str = None, state: str = None, error: str = None):
+    """OAuth callback page that handles the redirect and posts back to API"""
+    return HTMLResponse(f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Blackbaud Authentication</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-gray-50 flex items-center justify-center min-h-screen">
+        <div class="bg-white rounded-lg shadow-lg p-8 max-w-md w-full mx-4">
+            <div id="loading" class="text-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <h2 class="text-xl font-semibold text-gray-800 mb-2">Connecting to Blackbaud...</h2>
+                <p class="text-gray-600">Please wait while we complete the authentication.</p>
+                <div id="debug-info" class="mt-4 text-xs text-gray-500 bg-gray-100 p-2 rounded">
+                    <strong>OAuth Callback Debug Info:</strong><br>
+                    Code: {code or 'Missing'}<br>
+                    State: {state or 'Missing'}<br>
+                    Error: {error or 'None'}
+                </div>
+            </div>
+            
+            <div id="success" class="hidden text-center">
+                <div class="text-green-500 text-4xl mb-4">✅</div>
+                <h2 class="text-xl font-semibold text-gray-800 mb-2">Authentication Successful!</h2>
+                <p class="text-gray-600 mb-4">Your Blackbaud account has been connected.</p>
+                <button onclick="closeWindow()" class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700">
+                    Continue
+                </button>
+            </div>
+            
+            <div id="error" class="hidden text-center">
+                <div class="text-red-500 text-4xl mb-4">❌</div>
+                <h2 class="text-xl font-semibold text-gray-800 mb-2">Authentication Failed</h2>
+                <p class="text-gray-600 mb-4" id="error-message">Something went wrong during authentication.</p>
+                <div id="error-details" class="text-xs text-gray-500 mb-4 bg-red-50 p-2 rounded"></div>
+                <button onclick="closeWindow()" class="bg-gray-600 text-white px-6 py-2 rounded-md hover:bg-gray-700">
+                    Close and Try Again
+                </button>
+            </div>
+        </div>
+        
+        <script>
+            console.log('🔄 OAuth Callback Page Loaded');
+            console.log('Current URL:', window.location.href);
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code') || '{code}';
+            const state = urlParams.get('state') || '{state}';
+            const error = urlParams.get('error') || '{error}';
+            
+            console.log('Parameters received:', {{
+                code: code ? 'present (' + code.length + ' chars)' : 'missing',
+                state: state ? 'present (' + state.length + ' chars)' : 'missing',
+                error: error || 'none'
+            }});
+            
+            function showSuccess() {{
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('success').classList.remove('hidden');
+            }}
+            
+            function showError(message, details = '') {{
+                console.error('❌ Error:', message, details);
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('error').classList.remove('hidden');
+                document.getElementById('error-message').textContent = message;
+                if (details) {{
+                    document.getElementById('error-details').textContent = details;
+                }}
+            }}
+            
+            function closeWindow() {{
+                console.log('🔄 Closing window and notifying parent...');
+                if (window.opener) {{
+                    const success = !document.getElementById('error').classList.contains('hidden');
+                    const errorMsg = success ? null : document.getElementById('error-message').textContent;
+                    
+                    console.log('Sending message to parent:', {{ success, error: errorMsg }});
+                    
+                    window.opener.postMessage({{
+                        type: 'BLACKBAUD_AUTH_COMPLETE',
+                        success: success,
+                        error: errorMsg
+                    }}, '*');
+                    
+                    setTimeout(() => {{
+                        console.log('🔄 Closing popup window...');
+                        window.close();
+                    }}, 500);
+                }} else {{
+                    console.log('No opener window found, redirecting to main app');
+                    window.location.href = '/';
+                }}
+            }}
+            
+            async function handleCallback() {{
+                console.log('🔄 Starting OAuth callback processing...');
+                
+                if (error && error !== 'None') {{
+                    console.error('❌ OAuth error from Blackbaud:', error);
+                    showError(`Blackbaud OAuth Error: ${{error}}`);
+                    return;
+                }}
+                
+                if (!code || code === 'Missing' || !state || state === 'Missing') {{
+                    console.error('❌ Missing required OAuth parameters');
+                    showError('Missing authorization code or state parameter from Blackbaud.');
+                    return;
+                }}
+                
+                try {{
+                    const merchant_id = localStorage.getItem('bb_merchant_id') || '96563c2e-c97a-4db1-a0ed-1b2a8219f110';
+                    
+                    console.log('🔄 Making API call to process OAuth callback...');
+                    console.log('Merchant ID:', merchant_id);
+                    console.log('State preview:', state.substring(0, 30) + '...');
+                    console.log('Code preview:', code.substring(0, 10) + '...');
+                    
+                    const response = await fetch('/api/organizations/bbms-oauth/callback', {{
+                        method: 'POST',
+                        headers: {{
+                            'Content-Type': 'application/json'
+                        }},
+                        body: JSON.stringify({{
+                            code: code,
+                            state: state,
+                            merchant_id: merchant_id
+                        }})
+                    }});
+                    
+                    console.log('📡 API Response status:', response.status);
+                    
+                    if (response.ok) {{
+                        const result = await response.json();
+                        console.log('✅ OAuth callback successful:', result);
+                        localStorage.removeItem('bb_merchant_id');
+                        showSuccess();
+                    }} else {{
+                        const errorData = await response.json();
+                        console.error('❌ API Error:', errorData);
+                        
+                        let errorMessage = errorData.detail || 'Authentication failed';
+                        if (errorMessage.includes('invalid_grant')) {{
+                            errorMessage = 'Authorization code expired. Please try the OAuth flow again quickly.';
+                        }}
+                        
+                        showError(errorMessage, `Status: ${{response.status}} - ${{JSON.stringify(errorData)}}`);
+                    }}
+                }} catch (err) {{
+                    console.error('❌ Network error:', err);
+                    showError('Network error during authentication', err.message);
+                }}
+            }}
+            
+            // Start processing immediately when page loads
+            console.log('🚀 Initiating OAuth callback processing...');
+            handleCallback();
+        </script>
+    </body>
+    </html>
+    """)
 
 # CORS
 app.add_middleware(
