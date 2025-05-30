@@ -1127,7 +1127,7 @@ const EmbedCode = ({ organization }) => {
 <script>
 (function() {
   const iframe = document.createElement('iframe');
-  iframe.src = '${BACKEND_URL}/embed/donate/${organization?.id}';
+  iframe.src = '${BACKEND_URL}/api/embed/donate/${organization?.id}';
   iframe.width = '100%';
   iframe.height = '600';
   iframe.frameBorder = '0';
