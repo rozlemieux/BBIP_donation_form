@@ -201,3 +201,5 @@ test_plan:
 agent_communication:
   - agent: "testing"
     message: "Initializing test_result.md with the structure for testing the Donation Page Builder backend API endpoints. Will focus on testing the organization registration and login, OAuth2 flow, form customization, and donation checkout endpoints."
+  - agent: "testing"
+    message: "Completed testing of the Blackbaud payment API integration. Most endpoints are working correctly, but the payment checkout endpoint is still returning 404 errors. We tried multiple endpoint variations (/payments/checkout/sessions, /payment/v1/checkout/sessions, /payment/checkout/sessions, /payments/v1/checkout/sessions) but all returned 404 'Resource not found' errors. The issue might be with the Blackbaud API endpoint URL or our access to it. We need to verify the correct endpoint URL with Blackbaud's documentation or support."
