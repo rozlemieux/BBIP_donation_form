@@ -1213,7 +1213,7 @@ const EmbedCode = ({ organization }) => {
             <h4 className="font-medium text-gray-800 mb-3">Preview</h4>
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50">
               <iframe
-                src={`${BACKEND_URL}/embed/donate/${organization?.id}`}
+                src={`${BACKEND_URL}/api/embed/donate/${organization?.id}`}
                 width="100%"
                 height="400"
                 frameBorder="0"
