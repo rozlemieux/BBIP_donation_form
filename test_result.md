@@ -193,7 +193,8 @@ test_plan:
     - "OAuth2 Flow Endpoints"
     - "Form Customization Endpoints"
     - "Donation Checkout Endpoint"
-  stuck_tasks: []
+  stuck_tasks:
+    - "Donation Checkout Endpoint"
   test_all: false
   test_priority: "high_first"
 
