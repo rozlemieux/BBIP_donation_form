@@ -152,9 +152,9 @@ backend:
 
   - task: "Donation Checkout Endpoint"
     implemented: true
-    working: true
+    working: false
     file: "/app/backend/server.py"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
     needs_retesting: false
     status_history:
@@ -164,6 +164,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "The Blackbaud payment API endpoint has been successfully updated from `/payments/v1/checkouts` to `/payments/checkout/sessions`. The request structure is correct, including the headers and JSON data. The checkout data structure is correct, including all the required fields (merchant_account_id, amount with value and currency, return_url, cancel_url, and metadata with donor information)."
+      - working: false
+        agent: "testing"
+        comment: "The payment checkout endpoint is still returning 404 errors. We tried multiple endpoint variations (/payments/checkout/sessions, /payment/v1/checkout/sessions, /payment/checkout/sessions, /payments/v1/checkout/sessions) but all returned 404 'Resource not found' errors. The issue might be with the Blackbaud API endpoint URL or our access to it. We need to verify the correct endpoint URL with Blackbaud's documentation or support."
 
 frontend:
   - task: "Frontend Integration"
