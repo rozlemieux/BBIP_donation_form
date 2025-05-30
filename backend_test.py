@@ -388,12 +388,12 @@ class BlackbaudOAuthTester:
         return True
 
     def test_payment_checkout_session(self):
-        """Test creating a payment checkout session with the fixed endpoint"""
+        """Test creating a payment checkout session with the simplified endpoint"""
         if not self.token or not self.organization_id:
             print("❌ Authentication required before testing payment checkout")
             return False
             
-        print("\n🔍 Testing payment checkout session creation with 2025 API structure...")
+        print("\n🔍 Testing payment checkout session creation with simplified 2025 API structure...")
         
         # First, ensure we have Blackbaud credentials configured
         if not self.merchant_id or not self.bb_access_token:
@@ -414,65 +414,81 @@ class BlackbaudOAuthTester:
             }
         }
         
-        print("🔍 Testing with 2025 API structure...")
+        print("🔍 Testing with simplified 2025 API structure...")
         print(f"🔍 Using merchant ID: {self.merchant_id}")
         print(f"🔍 Using subscription key: e08faf45a0e643e6bfe042a8e4488afb")
         
-        # First, let's test the payment configurations endpoint directly for both URLs
+        # First, let's test the simplified payments endpoint directly
         try:
-            print("\n🔍 Testing payment configurations endpoint directly...")
+            print("\n🔍 Testing simplified payments endpoint directly...")
             headers = {
                 "Bb-Api-Subscription-Key": "e08faf45a0e643e6bfe042a8e4488afb",
                 "Content-Type": "application/json"
             }
             
-            # Try production URL first
-            configs_url_prod = "https://api.sky.blackbaud.com/payments/configurations"
-            print(f"Making request to production URL: {configs_url_prod}")
+            # Try the simplified payments endpoint
+            payments_url = "https://api.sky.blackbaud.com/payments"
+            print(f"Making GET request to simplified payments URL: {payments_url}")
             
-            configs_response_prod = requests.get(
-                configs_url_prod,
+            payments_response = requests.get(
+                payments_url,
                 headers=headers,
                 timeout=30.0
             )
             
-            print(f"Production configurations endpoint response: {configs_response_prod.status_code}")
-            if configs_response_prod.status_code == 200:
-                print("✅ Production payment configurations endpoint is accessible!")
-                print(f"Response: {configs_response_prod.text[:200]}...")  # Show first 200 chars
-                
-                # Check if the merchant ID is in the response
-                if self.merchant_id in configs_response_prod.text:
-                    print(f"✅ Merchant ID {self.merchant_id} found in configurations response!")
-                else:
-                    print(f"⚠️ Merchant ID {self.merchant_id} not found in configurations response")
+            print(f"Simplified payments endpoint GET response: {payments_response.status_code}")
+            if payments_response.status_code == 200:
+                print("✅ Simplified payments endpoint is accessible via GET!")
+                print(f"Response: {payments_response.text[:200]}...")  # Show first 200 chars
+            elif payments_response.status_code == 404:
+                print("❌ Simplified payments endpoint returned 404 - This might be expected for GET method")
+                print("🔍 Will try POST method through our API")
             else:
-                print(f"❌ Failed to access production payment configurations: {configs_response_prod.text}")
+                print(f"❌ Failed to access simplified payments endpoint via GET: {payments_response.text}")
                 
-                # Try sandbox URL as fallback
-                configs_url_sandbox = "https://api.sandbox.sky.blackbaud.com/payments/configurations"
-                print(f"Making request to sandbox URL: {configs_url_sandbox}")
+            # Try a direct POST to the simplified endpoint with minimal data
+            print(f"\n🔍 Testing direct POST to simplified payments endpoint: {payments_url}")
+            
+            # Create minimal test payload
+            test_payload = {
+                "merchant_account_id": self.merchant_id,
+                "amount": {
+                    "value": 500,  # $5.00
+                    "currency": "USD"
+                },
+                "return_url": "https://8b2b653e-9dbe-4e45-9ea1-8a28a59c538d.preview.emergentagent.com/success",
+                "cancel_url": "https://8b2b653e-9dbe-4e45-9ea1-8a28a59c538d.preview.emergentagent.com/cancel",
+                "metadata": {
+                    "donor_email": "direct_test@example.com",
+                    "donor_name": "Direct Test",
+                    "test_mode": "true"
+                }
+            }
+            
+            # We don't have a valid access token for direct testing, so this will likely fail with 401
+            # But it helps us confirm if the endpoint exists (401 vs 404)
+            direct_response = requests.post(
+                payments_url,
+                headers=headers,
+                json=test_payload,
+                timeout=30.0
+            )
+            
+            print(f"Direct POST to simplified payments endpoint response: {direct_response.status_code}")
+            if direct_response.status_code == 201 or direct_response.status_code == 200:
+                print("✅ Direct POST to simplified payments endpoint succeeded!")
+                print(f"Response: {direct_response.text[:200]}...")
+            elif direct_response.status_code == 401:
+                print("⚠️ Direct POST returned 401 Unauthorized - This is expected without a valid token")
+                print("✅ This confirms the endpoint exists but requires authentication")
+            elif direct_response.status_code == 404:
+                print("❌ Direct POST returned 404 Not Found - The simplified endpoint may not exist")
+            else:
+                print(f"⚠️ Direct POST returned unexpected status: {direct_response.status_code}")
+                print(f"Response: {direct_response.text[:200]}...")
                 
-                configs_response_sandbox = requests.get(
-                    configs_url_sandbox,
-                    headers=headers,
-                    timeout=30.0
-                )
-                
-                print(f"Sandbox configurations endpoint response: {configs_response_sandbox.status_code}")
-                if configs_response_sandbox.status_code == 200:
-                    print("✅ Sandbox payment configurations endpoint is accessible!")
-                    print(f"Response: {configs_response_sandbox.text[:200]}...")  # Show first 200 chars
-                    
-                    # Check if the merchant ID is in the response
-                    if self.merchant_id in configs_response_sandbox.text:
-                        print(f"✅ Merchant ID {self.merchant_id} found in configurations response!")
-                    else:
-                        print(f"⚠️ Merchant ID {self.merchant_id} not found in configurations response")
-                else:
-                    print(f"❌ Failed to access sandbox payment configurations: {configs_response_sandbox.text}")
         except Exception as e:
-            print(f"❌ Error testing configurations endpoint: {e}")
+            print(f"❌ Error testing simplified payments endpoint directly: {e}")
         
         # Now test the checkout endpoint through our API
         success, response = self.run_test(
