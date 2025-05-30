@@ -217,6 +217,14 @@ metadata:
   test_sequence: 1
   run_ui: false
 
+test_plan:
+  current_focus:
+    - "Blackbaud Checkout Integration"
+  stuck_tasks:
+    - "Blackbaud Payment API Integration"
+  test_all: false
+  test_priority: "high_first"
+
 agent_communication:
   - agent: "testing"
     message: "Initializing test_result.md with the structure for testing the Donation Page Builder backend API endpoints. Will focus on testing the organization registration and login, OAuth2 flow, form customization, and donation checkout endpoints."
