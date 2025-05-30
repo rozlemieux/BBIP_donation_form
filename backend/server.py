@@ -1264,8 +1264,6 @@ async def serve_donation_embed(org_id: str):
 # Include API router in app with higher priority
 app.include_router(api_router)
 
-
-
 # CORS
 app.add_middleware(
     CORSMiddleware,
