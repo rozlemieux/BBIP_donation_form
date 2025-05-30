@@ -408,7 +408,35 @@ class BlackbaudOAuthTester:
         }
         
         print("🔍 Testing with corrected sandbox API endpoint (api.sandbox.sky.blackbaud.com)...")
+        print(f"🔍 Using merchant ID: {self.merchant_id}")
         
+        # First, let's test the payment configurations endpoint directly
+        try:
+            print("\n🔍 Testing payment configurations endpoint directly...")
+            headers = {
+                "Bb-Api-Subscription-Key": os.environ.get('BB_PAYMENT_API_SUBSCRIPTION', 'e08faf45a0e643e6bfe042a8e4488afb'),
+                "Content-Type": "application/json"
+            }
+            
+            configs_url = "https://api.sandbox.sky.blackbaud.com/payments/configurations"
+            print(f"Making request to: {configs_url}")
+            
+            configs_response = requests.get(
+                configs_url,
+                headers=headers,
+                timeout=30.0
+            )
+            
+            print(f"Configurations endpoint response: {configs_response.status_code}")
+            if configs_response.status_code == 200:
+                print("✅ Payment configurations endpoint is accessible!")
+                print(f"Response: {configs_response.text[:200]}...")  # Show first 200 chars
+            else:
+                print(f"❌ Failed to access payment configurations: {configs_response.text}")
+        except Exception as e:
+            print(f"❌ Error testing configurations endpoint: {e}")
+        
+        # Now test the checkout endpoint through our API
         success, response = self.run_test(
             "Create Payment Checkout Session",
             "POST",
