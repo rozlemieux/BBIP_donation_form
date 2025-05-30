@@ -61,7 +61,7 @@ function App() {
       />
       <main className="max-w-6xl mx-auto px-4 py-8">
         {currentView === 'dashboard' && (
-          <Dashboard organization={organization} authToken={authToken} />
+          <Dashboard organization={organization} authToken={authToken} setCurrentView={setCurrentView} />
         )}
         {currentView === 'form-settings' && (
           <FormSettings organization={organization} authToken={authToken} onUpdate={fetchOrganization} />
