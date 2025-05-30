@@ -192,11 +192,18 @@ backend:
         agent: "testing"
         comment: "The Blackbaud JavaScript SDK integration is working correctly. The embedded donation form at /api/embed/donate/{org_id} successfully loads the JavaScript SDK from https://api.sky.blackbaud.com/skyui/js/bbCheckout.2.0.js and initializes it with the correct public key. The form contains the necessary JavaScript code to handle the checkout process and submit the transaction token to the backend."
 
-metadata:
-  created_by: "testing_agent"
-  version: "1.0"
-  test_sequence: 1
-  run_ui: false
+frontend:
+  - task: "Frontend Integration"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Frontend integration is not part of this testing scope"
 
 test_plan:
   current_focus:
