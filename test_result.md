@@ -205,16 +205,11 @@ frontend:
         agent: "main"
         comment: "Frontend integration is not part of this testing scope"
 
-test_plan:
-  current_focus:
-    - "Organization Registration and Login"
-    - "OAuth2 Flow Endpoints"
-    - "Form Customization Endpoints"
-    - "Donation Checkout Endpoint"
-  stuck_tasks:
-    - "Donation Checkout Endpoint"
-  test_all: false
-  test_priority: "high_first"
+metadata:
+  created_by: "testing_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: false
 
 agent_communication:
   - agent: "testing"
