@@ -911,7 +911,7 @@ def test_blackbaud_checkout_integration(tester):
     sdk_integration_success = False
     try:
         # Check if the SDK URL is accessible
-        sdk_url = "https://api.sky.blackbaud.com/skyui/js/bbCheckout.2.0.js"
+        sdk_url = "https://api.sky.blackbaud.com/skyui/js/bbCheckout"
         response = requests.get(sdk_url)
         print(f"SDK URL Status Code: {response.status_code}")
         
