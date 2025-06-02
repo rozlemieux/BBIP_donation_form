@@ -1602,54 +1602,45 @@ async def serve_test_donation_embed():
                         }}
                         
                         console.log('Step 2: Testing Blackbaud Checkout SDK integration...');
-                        console.log('bbCheckout available:', typeof bbCheckout);
-                        console.log('window.bbCheckout available:', typeof window.bbCheckout);
-                        console.log('window.BlackbaudCheckout available:', typeof window.BlackbaudCheckout);
-                        console.log('window.BBMS available:', typeof window.BBMS);
-                        console.log('window.BBMSCheckout available:', typeof window.BBMSCheckout);
+                        console.log('bbcheckout available:', typeof bbcheckout);
+                        console.log('window.bbcheckout available:', typeof window.bbcheckout);
                         
-                        // Check for different possible SDK variable names
+                        // Check for the correct SDK variable name
                         let CheckoutSDK = null;
-                        if (typeof bbCheckout !== 'undefined') {{
-                            CheckoutSDK = bbCheckout;
-                            console.log('Using bbCheckout');
-                        }} else if (typeof window.bbCheckout !== 'undefined') {{
-                            CheckoutSDK = window.bbCheckout;
-                            console.log('Using window.bbCheckout');
-                        }} else if (typeof window.BlackbaudCheckout !== 'undefined') {{
-                            CheckoutSDK = window.BlackbaudCheckout;
-                            console.log('Using window.BlackbaudCheckout');
-                        }} else if (typeof window.BBMS !== 'undefined') {{
-                            CheckoutSDK = window.BBMS;
-                            console.log('Using window.BBMS');
-                        }} else if (typeof window.BBMSCheckout !== 'undefined') {{
-                            CheckoutSDK = window.BBMSCheckout;
-                            console.log('Using window.BBMSCheckout');
+                        if (typeof bbcheckout !== 'undefined') {{
+                            CheckoutSDK = bbcheckout;
+                            console.log('Using bbcheckout (lowercase)');
+                        }} else if (typeof window.bbcheckout !== 'undefined') {{
+                            CheckoutSDK = window.bbcheckout;
+                            console.log('Using window.bbcheckout');
                         }} else {{
-                            console.error('Blackbaud Checkout SDK not found. Available objects:', Object.keys(window).filter(key => key.toLowerCase().includes('blackbaud') || key.toLowerCase().includes('checkout') || key.toLowerCase().includes('bbms')));
+                            console.error('Blackbaud Checkout SDK not found. Available objects:', Object.keys(window).filter(key => key.toLowerCase().includes('blackbaud') || key.toLowerCase().includes('checkout') || key.toLowerCase().includes('bb')));
                             throw new Error('Blackbaud Checkout SDK not loaded properly');
                         }}
                         
-                        console.log('Step 3: Initializing REAL Blackbaud checkout with config:', {{
-                            publicKey: BB_PUBLIC_KEY,
-                            merchantAccountId: checkoutConfig.merchant_account_id,
-                            amount: Math.round(checkoutConfig.amount * 100),
-                            currency: 'USD'
-                        }});
+                        console.log('Step 3: Setting up Blackbaud checkout configuration...');
                         
-                        // Step 3: Initialize REAL Blackbaud Checkout with JavaScript SDK
-                        const checkout = new CheckoutSDK({{
-                            publicKey: BB_PUBLIC_KEY,
-                            merchantAccountId: checkoutConfig.merchant_account_id,
+                        // Configure the Blackbaud checkout API
+                        if (CheckoutSDK.Configuration) {{
+                            CheckoutSDK.Configuration.APITokenID = BB_PUBLIC_KEY;
+                            console.log('API Token configured');
+                        }}
+                        
+                        console.log('Step 4: Opening REAL Blackbaud checkout modal...');
+                        
+                        // Open the REAL checkout modal using the correct API
+                        CheckoutSDK.open({{
                             amount: Math.round(checkoutConfig.amount * 100), // Convert to cents
                             currency: 'USD',
+                            description: `Donation to Test Organization`,
+                            merchantAccountId: checkoutConfig.merchant_account_id,
                             customer: {{
                                 email: checkoutConfig.donor_info.email,
                                 name: checkoutConfig.donor_info.name
                             }},
-                            onSuccess: function(transactionToken) {{
-                                console.log('REAL payment success, token:', transactionToken);
-                                handleTestPaymentSuccess(transactionToken, donationData);
+                            onSuccess: function(response) {{
+                                console.log('REAL payment success, response:', response);
+                                handleTestPaymentSuccess(response.token || response.transactionToken || response.id, donationData);
                             }},
                             onCancel: function() {{
                                 console.log('REAL payment cancelled');
@@ -1660,10 +1651,6 @@ async def serve_test_donation_embed():
                                 handlePaymentError(error);
                             }}
                         }});
-                        
-                        console.log('Step 4: Opening REAL Blackbaud checkout modal...');
-                        // Open the REAL checkout modal where user enters credit card info
-                        checkout.open();
                         
                     }} catch (error) {{
                         console.error('Test donation initialization failed:', error);
