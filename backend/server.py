@@ -1427,7 +1427,7 @@ async def serve_test_donation_embed():
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Test Donation Form</title>
         <script src="https://cdn.tailwindcss.com"></script>
-        <script src="https://js.bbms.com/checkout.js"></script>
+        <script src="https://checkout.blackbaud.com/checkout.js"></script>
         <style>
             body {{ margin: 0; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; }}
         </style>
