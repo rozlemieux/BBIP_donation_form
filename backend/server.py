@@ -1605,6 +1605,8 @@ async def serve_test_donation_embed():
                         console.log('bbCheckout available:', typeof bbCheckout);
                         console.log('window.bbCheckout available:', typeof window.bbCheckout);
                         console.log('window.BlackbaudCheckout available:', typeof window.BlackbaudCheckout);
+                        console.log('window.BBMS available:', typeof window.BBMS);
+                        console.log('window.BBMSCheckout available:', typeof window.BBMSCheckout);
                         
                         // Check for different possible SDK variable names
                         let CheckoutSDK = null;
@@ -1617,8 +1619,14 @@ async def serve_test_donation_embed():
                         }} else if (typeof window.BlackbaudCheckout !== 'undefined') {{
                             CheckoutSDK = window.BlackbaudCheckout;
                             console.log('Using window.BlackbaudCheckout');
+                        }} else if (typeof window.BBMS !== 'undefined') {{
+                            CheckoutSDK = window.BBMS;
+                            console.log('Using window.BBMS');
+                        }} else if (typeof window.BBMSCheckout !== 'undefined') {{
+                            CheckoutSDK = window.BBMSCheckout;
+                            console.log('Using window.BBMSCheckout');
                         }} else {{
-                            console.error('Blackbaud Checkout SDK not found. Available objects:', Object.keys(window).filter(key => key.toLowerCase().includes('blackbaud') || key.toLowerCase().includes('checkout')));
+                            console.error('Blackbaud Checkout SDK not found. Available objects:', Object.keys(window).filter(key => key.toLowerCase().includes('blackbaud') || key.toLowerCase().includes('checkout') || key.toLowerCase().includes('bbms')));
                             throw new Error('Blackbaud Checkout SDK not loaded properly');
                         }}
                         
