@@ -1669,9 +1669,9 @@ async def serve_test_donation_embed():
                 
                 async function handleTestPaymentSuccess(transactionToken, donationData) {{
                     try {{
-                        console.log('Processing test transaction token:', transactionToken);
+                        console.log('Processing REAL transaction token:', transactionToken);
                         
-                        // Process the test transaction token
+                        // Process the REAL transaction token
                         const response = await fetch(`${{API_BASE}}/test-process-transaction`, {{
                             method: 'POST',
                             headers: {{
@@ -1688,16 +1688,31 @@ async def serve_test_donation_embed():
                         }}
                         
                         const result = await response.json();
-                        console.log('Test donation completed successfully:', result);
+                        console.log('REAL donation completed successfully:', result);
                         
                         // Show success message
                         document.getElementById('loading').classList.add('hidden');
                         document.getElementById('success').classList.remove('hidden');
                         
                     }} catch (error) {{
-                        console.error('Test transaction processing failed:', error);
-                        alert('Test payment processing failed. Check console for details.');
+                        console.error('REAL transaction processing failed:', error);
+                        alert('Payment was processed but we had trouble recording it. Please contact support.');
                     }}
+                }}
+                
+                function handlePaymentCancel() {{
+                    console.log('REAL payment was cancelled by user');
+                    // Show form again
+                    document.getElementById('loading').classList.add('hidden');
+                    document.getElementById('donation-form').classList.remove('hidden');
+                }}
+                
+                function handlePaymentError(error) {{
+                    console.error('REAL payment error:', error);
+                    alert(`Payment failed: ${{error.message || 'Unknown error'}}`);
+                    // Show form again
+                    document.getElementById('loading').classList.add('hidden');
+                    document.getElementById('donation-form').classList.remove('hidden');
                 }}
             }}
         </script>
