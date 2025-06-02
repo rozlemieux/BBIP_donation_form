@@ -1604,16 +1604,58 @@ async def serve_test_donation_embed():
                         console.log('Step 2: Testing Blackbaud Checkout SDK integration...');
                         console.log('bbCheckout available:', typeof bbCheckout);
                         console.log('window.bbCheckout available:', typeof window.bbCheckout);
+                        console.log('window.BlackbaudCheckout available:', typeof window.BlackbaudCheckout);
                         
-                        // For demonstration, we'll simulate a successful payment
-                        // In production, this would open the actual Blackbaud checkout modal
-                        console.log('Step 3: Simulating Blackbaud checkout process...');
+                        // Check for different possible SDK variable names
+                        let CheckoutSDK = null;
+                        if (typeof bbCheckout !== 'undefined') {{
+                            CheckoutSDK = bbCheckout;
+                            console.log('Using bbCheckout');
+                        }} else if (typeof window.bbCheckout !== 'undefined') {{
+                            CheckoutSDK = window.bbCheckout;
+                            console.log('Using window.bbCheckout');
+                        }} else if (typeof window.BlackbaudCheckout !== 'undefined') {{
+                            CheckoutSDK = window.BlackbaudCheckout;
+                            console.log('Using window.BlackbaudCheckout');
+                        }} else {{
+                            console.error('Blackbaud Checkout SDK not found. Available objects:', Object.keys(window).filter(key => key.toLowerCase().includes('blackbaud') || key.toLowerCase().includes('checkout')));
+                            throw new Error('Blackbaud Checkout SDK not loaded properly');
+                        }}
                         
-                        // Simulate checkout process
-                        setTimeout(() => {{
-                            const mockTransactionToken = 'test_token_' + Date.now();
-                            handleTestPaymentSuccess(mockTransactionToken, donationData);
-                        }}, 2000);
+                        console.log('Step 3: Initializing REAL Blackbaud checkout with config:', {{
+                            publicKey: BB_PUBLIC_KEY,
+                            merchantAccountId: checkoutConfig.merchant_account_id,
+                            amount: Math.round(checkoutConfig.amount * 100),
+                            currency: 'USD'
+                        }});
+                        
+                        // Step 3: Initialize REAL Blackbaud Checkout with JavaScript SDK
+                        const checkout = new CheckoutSDK({{
+                            publicKey: BB_PUBLIC_KEY,
+                            merchantAccountId: checkoutConfig.merchant_account_id,
+                            amount: Math.round(checkoutConfig.amount * 100), // Convert to cents
+                            currency: 'USD',
+                            customer: {{
+                                email: checkoutConfig.donor_info.email,
+                                name: checkoutConfig.donor_info.name
+                            }},
+                            onSuccess: function(transactionToken) {{
+                                console.log('REAL payment success, token:', transactionToken);
+                                handleTestPaymentSuccess(transactionToken, donationData);
+                            }},
+                            onCancel: function() {{
+                                console.log('REAL payment cancelled');
+                                handlePaymentCancel();
+                            }},
+                            onError: function(error) {{
+                                console.error('REAL payment error:', error);
+                                handlePaymentError(error);
+                            }}
+                        }});
+                        
+                        console.log('Step 4: Opening REAL Blackbaud checkout modal...');
+                        // Open the REAL checkout modal where user enters credit card info
+                        checkout.open();
                         
                     }} catch (error) {{
                         console.error('Test donation initialization failed:', error);
