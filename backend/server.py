@@ -266,7 +266,9 @@ class Organization(BaseModel):
     name: str
     admin_email: str
     admin_password_hash: str
-    bb_merchant_id: Optional[str] = None
+    bb_merchant_id: Optional[str] = None  # Legacy field for backward compatibility
+    bb_test_merchant_id: Optional[str] = None  # Test environment merchant ID
+    bb_production_merchant_id: Optional[str] = None  # Production environment merchant ID
     bb_access_token: Optional[str] = None
     bb_refresh_token: Optional[str] = None
     test_mode: bool = True  # Organizations start in test mode for safety
