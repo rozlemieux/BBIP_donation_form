@@ -1720,7 +1720,324 @@ async def serve_test_donation_embed():
 @app.get("/api/embed/donate/{org_id}")
 async def serve_donation_embed(org_id: str):
     """Serve donation form for iframe embedding with Blackbaud JavaScript SDK"""
-    public_key = os.environ.get('BB_PUBLIC_KEY')
+    try:
+        # Check if organization exists and has BBMS configured
+        org = await db["organizations"].find_one({"id": org_id})
+        if not org:
+            # Fallback to test form if organization not found
+            return await serve_test_donation_embed()
+        
+        bbms_config = org.get("bbms_config", {})
+        if not bbms_config.get("access_token"):
+            # Fallback to test form if not configured
+            return await serve_test_donation_embed()
+        
+        # Organization is properly configured, show the real form
+        public_key = os.environ.get('BB_PUBLIC_KEY')
+        return HTMLResponse(f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>Donation Form</title>
+            <script src="https://cdn.tailwindcss.com"></script>
+            <script src="https://payments.blackbaud.com/Checkout/bbCheckout.2.0.js"></script>
+            <style>
+                body {{ margin: 0; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; }}
+            </style>
+        </head>
+        <body>
+            <div id="donation-root" class="max-w-md mx-auto"></div>
+            <script>
+                const ORG_ID = '{org_id}';
+                const API_BASE = 'https://8b2b653e-9dbe-4e45-9ea1-8a28a59c538d.preview.emergentagent.com/api';
+                const BB_PUBLIC_KEY = '{public_key}';
+                
+                // Organization-specific donation form implementation
+                window.addEventListener('DOMContentLoaded', function() {{
+                    initDonationForm();
+                }});
+                
+                async function initDonationForm() {{
+                    try {{
+                        const response = await fetch(`${{API_BASE}}/organizations/${{ORG_ID}}/donation-form`);
+                        const config = await response.json();
+                        renderDonationForm(config);
+                    }} catch (error) {{
+                        console.error('Failed to load form config:', error);
+                        document.getElementById('donation-root').innerHTML = '<p class="text-red-500">Failed to load donation form</p>';
+                    }}
+                }}
+                
+                function renderDonationForm(config) {{
+                    const root = document.getElementById('donation-root');
+                    root.innerHTML = `
+                        <div class="bg-white rounded-lg shadow-lg p-6">
+                            <h2 class="text-2xl font-bold text-gray-800 mb-2">${{config.organization_name}}</h2>
+                            <p class="text-gray-600 mb-6">${{config.description}}</p>
+                            
+                            <form id="donation-form" class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Donation Amount</label>
+                                    <div class="grid grid-cols-3 gap-2 mb-3">
+                                        ${{config.preset_amounts.map(amount => `
+                                            <button type="button" class="amount-btn bg-gray-100 hover:bg-blue-100 border border-gray-300 rounded px-3 py-2 text-sm font-medium" data-amount="${{amount}}">
+                                                $${{amount}}
+                                            </button>
+                                        `).join('')}}
+                                    </div>
+                                    ${{config.custom_amount_enabled ? `
+                                        <div class="flex items-center space-x-2">
+                                            <button type="button" id="custom-btn" class="amount-btn bg-gray-100 hover:bg-blue-100 border border-gray-300 rounded px-3 py-2 text-sm font-medium">
+                                                Custom
+                                            </button>
+                                            <input type="number" id="custom-amount" class="hidden flex-1 border border-gray-300 rounded px-3 py-2 text-sm" placeholder="Enter amount" min="1" step="0.01">
+                                        </div>
+                                    ` : ''}}
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                                    <input type="text" id="donor-name" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                                    <input type="email" id="donor-email" required class="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                </div>
+                                
+                                <button type="submit" id="donate-btn" disabled class="w-full bg-blue-600 text-white font-medium py-3 px-4 rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed">
+                                    Donate Now
+                                </button>
+                            </form>
+                            
+                            <div id="loading" class="hidden text-center py-8">
+                                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                                <p class="mt-2 text-gray-600">Processing your donation...</p>
+                            </div>
+                            
+                            <div id="success" class="hidden text-center py-8">
+                                <div class="text-green-600 text-4xl mb-4">✓</div>
+                                <h3 class="text-lg font-medium text-gray-800">Thank you for your donation!</h3>
+                                <p class="text-gray-600 mt-2">Your payment has been processed successfully.</p>
+                            </div>
+                        </div>
+                    `;
+                    
+                    setupFormInteractions();
+                }}
+                
+                function setupFormInteractions() {{
+                    let selectedAmount = null;
+                    
+                    // Amount button handlers
+                    document.querySelectorAll('.amount-btn').forEach(btn => {{
+                        btn.addEventListener('click', function() {{
+                            document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('bg-blue-500', 'text-white'));
+                            this.classList.add('bg-blue-500', 'text-white');
+                            
+                            if (this.id === 'custom-btn') {{
+                                document.getElementById('custom-amount').classList.remove('hidden');
+                                selectedAmount = null;
+                            }} else {{
+                                document.getElementById('custom-amount').classList.add('hidden');
+                                selectedAmount = parseFloat(this.dataset.amount);
+                            }}
+                            updateDonateButton();
+                        }});
+                    }});
+                    
+                    // Custom amount input
+                    const customAmountInput = document.getElementById('custom-amount');
+                    if (customAmountInput) {{
+                        customAmountInput.addEventListener('input', function() {{
+                            selectedAmount = parseFloat(this.value);
+                            updateDonateButton();
+                        }});
+                    }}
+                    
+                    // Form fields
+                    document.getElementById('donor-name').addEventListener('input', updateDonateButton);
+                    document.getElementById('donor-email').addEventListener('input', updateDonateButton);
+                    
+                    // Form submission
+                    document.getElementById('donation-form').addEventListener('submit', handleDonationSubmit);
+                    
+                    function updateDonateButton() {{
+                        const name = document.getElementById('donor-name').value.trim();
+                        const email = document.getElementById('donor-email').value.trim();
+                        const donateBtn = document.getElementById('donate-btn');
+                        
+                        const isValid = selectedAmount > 0 && name && email && email.includes('@');
+                        donateBtn.disabled = !isValid;
+                    }}
+                    
+                    async function handleDonationSubmit(e) {{
+                        e.preventDefault();
+                        
+                        const donationData = {{
+                            amount: selectedAmount,
+                            donor_name: document.getElementById('donor-name').value.trim(),
+                            donor_email: document.getElementById('donor-email').value.trim(),
+                            org_id: ORG_ID
+                        }};
+                        
+                        console.log('Starting donation process with data:', donationData);
+                        
+                        // Show loading
+                        document.getElementById('donation-form').classList.add('hidden');
+                        document.getElementById('loading').classList.remove('hidden');
+                        
+                        try {{
+                            console.log('Step 1: Getting checkout configuration from backend...');
+                            
+                            // Step 1: Get checkout configuration from our backend
+                            const configResponse = await fetch(`${{API_BASE}}/donate`, {{
+                                method: 'POST',
+                                headers: {{
+                                    'Content-Type': 'application/json'
+                                }},
+                                body: JSON.stringify(donationData)
+                            }});
+                            
+                            console.log('Config response status:', configResponse.status);
+                            
+                            if (!configResponse.ok) {{
+                                const errorText = await configResponse.text();
+                                console.error('Config response error:', errorText);
+                                throw new Error(`Failed to get checkout configuration: ${{configResponse.status}} - ${{errorText}}`);
+                            }}
+                            
+                            const configResult = await configResponse.json();
+                            console.log('Config result:', configResult);
+                            const checkoutConfig = configResult.checkout_config;
+                            
+                            if (!checkoutConfig) {{
+                                throw new Error('No checkout configuration received from server');
+                            }}
+                            
+                            console.log('Step 2: Testing Blackbaud Checkout SDK integration...');
+                            console.log('Blackbaud_OpenPaymentForm available:', typeof Blackbaud_OpenPaymentForm);
+                            
+                            // Check for the correct Blackbaud function
+                            if (typeof Blackbaud_OpenPaymentForm === 'undefined') {{
+                                console.error('Blackbaud_OpenPaymentForm function not found. Available functions:', Object.keys(window).filter(key => key.toLowerCase().includes('blackbaud')));
+                                throw new Error('Blackbaud Checkout SDK not loaded properly');
+                            }}
+                            
+                            console.log('Step 3: Setting up Blackbaud checkout event listeners...');
+                            
+                            // Set up event listeners for checkout events
+                            document.addEventListener('checkoutReady', function() {{
+                                console.log('Checkout ready');
+                            }});
+                            
+                            document.addEventListener('checkoutLoaded', function() {{
+                                console.log('Checkout loaded');
+                            }});
+                            
+                            document.addEventListener('checkoutCancel', function() {{
+                                console.log('REAL payment cancelled');
+                                handlePaymentCancel();
+                            }});
+                            
+                            document.addEventListener('checkoutComplete', function(e) {{
+                                console.log('REAL payment complete, transaction token:', e.detail.transactionToken);
+                                handlePaymentSuccess(e.detail.transactionToken, donationData);
+                            }});
+                            
+                            document.addEventListener('checkoutError', function(e) {{
+                                console.error('REAL payment error:', e.detail);
+                                handlePaymentError({{
+                                    message: e.detail.errorText,
+                                    code: e.detail.errorCode
+                                }});
+                            }});
+                            
+                            console.log('Step 4: Creating transaction object...');
+                            
+                            // Create transaction object as per official documentation
+                            const transactionData = {{
+                                key: BB_PUBLIC_KEY, // Using the public key as the transaction key
+                                payment_configuration_id: checkoutConfig.merchant_account_id,
+                                Amount: checkoutConfig.amount
+                            }};
+                            
+                            console.log('Transaction data:', transactionData);
+                            
+                            console.log('Step 5: Opening REAL Blackbaud checkout modal...');
+                            
+                            // Open the REAL checkout modal using official Blackbaud method
+                            Blackbaud_OpenPaymentForm(transactionData);
+                            
+                        }} catch (error) {{
+                            console.error('Donation initialization failed:', error);
+                            alert(`Failed to initialize payment: ${{error.message}}`);
+                            
+                            // Show form again
+                            document.getElementById('loading').classList.add('hidden');
+                            document.getElementById('donation-form').classList.remove('hidden');
+                        }}
+                    }}
+                    
+                    async function handlePaymentSuccess(transactionToken, donationData) {{
+                        try {{
+                            console.log('Processing REAL transaction token:', transactionToken);
+                            
+                            // Process the REAL transaction token
+                            const response = await fetch(`${{API_BASE}}/process-transaction`, {{
+                                method: 'POST',
+                                headers: {{
+                                    'Content-Type': 'application/json'
+                                }},
+                                body: JSON.stringify({{
+                                    transaction_token: transactionToken,
+                                    donation_data: donationData
+                                }})
+                            }});
+                            
+                            if (!response.ok) {{
+                                throw new Error('Failed to process transaction');
+                            }}
+                            
+                            const result = await response.json();
+                            console.log('REAL donation completed successfully:', result);
+                            
+                            // Show success message
+                            document.getElementById('loading').classList.add('hidden');
+                            document.getElementById('success').classList.remove('hidden');
+                            
+                        }} catch (error) {{
+                            console.error('REAL transaction processing failed:', error);
+                            alert('Payment was processed but we had trouble recording it. Please contact support.');
+                        }}
+                    }}
+                    
+                    function handlePaymentCancel() {{
+                        console.log('REAL payment was cancelled by user');
+                        // Show form again
+                        document.getElementById('loading').classList.add('hidden');
+                        document.getElementById('donation-form').classList.remove('hidden');
+                    }}
+                    
+                    function handlePaymentError(error) {{
+                        console.error('REAL payment error:', error);
+                        alert(`Payment failed: ${{error.message || 'Unknown error'}}`);
+                        // Show form again
+                        document.getElementById('loading').classList.add('hidden');
+                        document.getElementById('donation-form').classList.remove('hidden');
+                    }}
+                }}
+            </script>
+        </body>
+        </html>
+        """)
+        
+    except Exception as e:
+        logging.error(f"Error serving donation embed: {str(e)}")
+        # Fallback to test form on any error
+        return await serve_test_donation_embed()
     return HTMLResponse(f"""
     <!DOCTYPE html>
     <html>
