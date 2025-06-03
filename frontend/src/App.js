@@ -410,6 +410,17 @@ const Dashboard = ({ organization, authToken, setCurrentView }) => {
             <div className="font-medium">Payment Settings</div>
             <div className="text-sm text-gray-600">Configure BBMS credentials</div>
           </button>
+          
+          <a
+            href={`${BACKEND_URL}/api/embed/test-donate`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-4 border rounded-lg hover:bg-gray-50 text-left transition-all hover:border-green-300 block"
+          >
+            <div className="text-2xl mb-2">🧪</div>
+            <div className="font-medium">Test Payment Flow</div>
+            <div className="text-sm text-gray-600">Try the donation form with working payments</div>
+          </a>
         </div>
       </div>
     </div>
