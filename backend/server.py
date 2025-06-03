@@ -1645,7 +1645,7 @@ async def get_donation_form_config(org_id: str):
     return {
         "organization_name": organization.name,
         "description": organization.form_settings.get("organization_description", ""),
-        "preset_amounts": organization.form_settings.get("preset_amounts", [25, 50, 100]),
+        "preset_amounts": sorted(organization.form_settings.get("preset_amounts", [25, 50, 100])),
         "custom_amount_enabled": organization.form_settings.get("custom_amount_enabled", True),
         "required_fields": organization.form_settings.get("required_fields", ["name", "email"])
     }
