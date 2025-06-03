@@ -1240,26 +1240,28 @@ async def create_donation(donation: DonationRequest, authorization: str = Header
             bbms_config = org.get("bbms_config", {})
             encrypted_access_token = bbms_config.get("access_token")
         
-        merchant_id = org.get("bb_merchant_id")  # Get merchant ID from organization data
-        
-        logging.info(f"Access token present (bb_access_token): {bool(encrypted_access_token)}")
-        logging.info(f"Merchant ID: {merchant_id}")
-        
-        if not encrypted_access_token:
-            raise HTTPException(400, "Organization has not configured Blackbaud BBMS access")
-        
-        if not merchant_id:
-            raise HTTPException(400, "Organization merchant ID not configured")
-        
-        # Decrypt the access token
-        access_token = decrypt_data(encrypted_access_token)
-        
         # Get organization's test mode setting
         org_test_mode = org.get("test_mode", True)
         
+        # Get appropriate merchant ID based on mode
+        if org_test_mode:
+            merchant_id = org.get("bb_test_merchant_id") or org.get("bb_merchant_id")  # Fallback to legacy
+        else:
+            merchant_id = org.get("bb_production_merchant_id") or org.get("bb_merchant_id")  # Fallback to legacy
+        
         logging.info(f"=== MODE SETTINGS ===")
         logging.info(f"Organization {organization_id} test_mode setting: {org_test_mode}")
-        logging.info(f"Merchant ID: {merchant_id}")
+        logging.info(f"Selected merchant ID for {'test' if org_test_mode else 'production'} mode: {merchant_id}")
+        
+        if not merchant_id:
+            mode_text = "test" if org_test_mode else "production"
+            raise HTTPException(400, f"Organization has not configured {mode_text} merchant ID")
+
+        if not encrypted_access_token:
+            raise HTTPException(400, "Organization has not configured Blackbaud BBMS access")
+
+        # Decrypt the access token
+        access_token = decrypt_data(encrypted_access_token)
         
         # Create checkout configuration for frontend using organization's mode setting
         checkout_config = await bb_client.create_payment_checkout(
