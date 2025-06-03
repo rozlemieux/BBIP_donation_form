@@ -315,12 +315,13 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Blackbaud Checkout Integration"
-    - "Test Organization Setup with Encrypted Token"
-    - "Test Donation Endpoints"
-  stuck_tasks:
-    - "Donation Checkout Endpoint"
-  test_all: false
+    - "Updated Embed Page"
+    - "Dashboard Quick Actions"
+    - "BBMS Configuration Page"
+    - "Form Preview and Links"
+    - "General UI Review"
+  stuck_tasks: []
+  test_all: true
   test_priority: "high_first"
 
 agent_communication:
