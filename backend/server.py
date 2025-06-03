@@ -16,6 +16,7 @@ import json
 from cryptography.fernet import Fernet
 import base64
 from jose import JWTError, jwt
+import bcrypt
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
