@@ -1372,8 +1372,12 @@ async def process_transaction(
         if not org:
             raise HTTPException(404, "Organization not found")
         
-        bbms_config = org.get("bbms_config", {})
-        encrypted_access_token = bbms_config.get("access_token")
+        # Get BBMS configuration - check both new and legacy formats
+        encrypted_access_token = org.get("bb_access_token")  # New format (OAuth2 and manual)
+        if not encrypted_access_token:
+            # Legacy format fallback
+            bbms_config = org.get("bbms_config", {})
+            encrypted_access_token = bbms_config.get("access_token")
         
         if not encrypted_access_token:
             raise HTTPException(400, "Organization has not configured Blackbaud BBMS access")
