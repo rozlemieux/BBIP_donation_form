@@ -1670,6 +1670,8 @@ async def serve_test_donation_embed():
                         }});
                         
                         console.log('Step 4: Creating transaction object...');
+                        console.log('Checkout config received:', checkoutConfig);
+                        console.log('Mode settings - test_mode:', checkoutConfig.test_mode, 'process_mode:', checkoutConfig.process_mode);
                         
                         // Create transaction object as per official documentation
                         const transactionData = {{
