@@ -1152,6 +1152,88 @@ async def setup_bbms_merchant_ids(
     
     return {"message": "BBMS merchant account IDs configured successfully"}
 
+@app.post("/api/organizations/request-password-reset")
+async def request_password_reset(request: PasswordResetRequest):
+    """Request a password reset - generates a simple reset code"""
+    try:
+        org = await db["organizations"].find_one({"admin_email": request.email})
+        if not org:
+            # Don't reveal if email exists or not for security
+            return {"message": "If an account with this email exists, a reset code has been generated."}
+        
+        # Generate a simple 6-digit reset code
+        import random
+        reset_code = str(random.randint(100000, 999999))
+        
+        # Store the reset code (in production, this should expire)
+        await db["organizations"].update_one(
+            {"admin_email": request.email},
+            {
+                "$set": {
+                    "password_reset_code": reset_code,
+                    "password_reset_requested_at": datetime.utcnow()
+                }
+            }
+        )
+        
+        # In a real app, you'd send this via email
+        # For demo purposes, we'll log it (check backend logs)
+        logging.info(f"Password reset code for {request.email}: {reset_code}")
+        
+        return {
+            "message": "Reset code generated. Check the backend logs for the code (in production, this would be emailed).",
+            "debug_code": reset_code  # Remove this in production!
+        }
+    except Exception as e:
+        logging.error(f"Password reset request failed: {str(e)}")
+        return {"message": "If an account with this email exists, a reset code has been generated."}
+
+@app.post("/api/organizations/reset-password")
+async def reset_password(reset: PasswordReset):
+    """Reset password using the reset code"""
+    try:
+        org = await db["organizations"].find_one({
+            "admin_email": reset.email,
+            "password_reset_code": reset.reset_code
+        })
+        
+        if not org:
+            raise HTTPException(400, "Invalid email or reset code")
+        
+        # Check if reset code is not too old (24 hours)
+        reset_time = org.get("password_reset_requested_at")
+        if reset_time:
+            time_diff = datetime.utcnow() - reset_time
+            if time_diff.total_seconds() > 86400:  # 24 hours
+                raise HTTPException(400, "Reset code has expired")
+        
+        # Hash the new password
+        password_hash = bcrypt.hashpw(reset.new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        
+        # Update password and clear reset code
+        await db["organizations"].update_one(
+            {"admin_email": reset.email},
+            {
+                "$set": {
+                    "admin_password_hash": password_hash,
+                    "updated_at": datetime.utcnow()
+                },
+                "$unset": {
+                    "password_reset_code": "",
+                    "password_reset_requested_at": ""
+                }
+            }
+        )
+        
+        logging.info(f"Password reset successful for {reset.email}")
+        return {"message": "Password reset successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Password reset failed: {str(e)}")
+        raise HTTPException(500, "Password reset failed")
+
 @app.get("/api/developer-instructions")
 async def get_developer_instructions():
     """Get setup instructions for SKY App Developers"""
