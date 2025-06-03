@@ -696,8 +696,18 @@ const BBMSConfig = ({ organization, authToken, onUpdate }) => {
         </div>
         
         {organization?.has_bbms_configured && (
-          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md mb-6">
-            ✅ BBMS is configured and ready to accept donations
+          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md mb-6 flex items-center justify-between">
+            <div>
+              <span className="font-medium">✅ BBMS is configured and ready to accept donations</span>
+            </div>
+            <a
+              href={`${BACKEND_URL}/api/embed/test-donate`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm font-medium"
+            >
+              🧪 Test Payment Flow
+            </a>
           </div>
         )}
 
