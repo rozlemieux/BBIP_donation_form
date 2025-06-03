@@ -286,6 +286,10 @@ class BBMSCredentials(BaseModel):
     merchant_id: str
     access_token: str
 
+class BBMSSetup(BaseModel):
+    test_merchant_id: Optional[str] = None
+    production_merchant_id: Optional[str] = None
+
 class BBMSOAuthStart(BaseModel):
     merchant_id: str
     app_id: str
