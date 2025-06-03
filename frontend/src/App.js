@@ -113,284 +113,32 @@ const Navigation = ({ currentPage, setCurrentPage }) => {
 
 // Auth Page Component
 const AuthPage = ({ onLogin }) => {
-  const [currentView, setCurrentView] = useState('login'); // 'login', 'register', 'forgot', 'reset'
+  const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    name: '',
-    resetCode: '',
-    newPassword: ''
+    name: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    setSuccess('');
 
     try {
-      if (currentView === 'login') {
-        const response = await axios.post(`${API}/organizations/login`, {
-          email: formData.email,
-          password: formData.password
-        });
-        onLogin(response.data.access_token);
-      } else if (currentView === 'register') {
-        const response = await axios.post(`${API}/organizations/register`, {
-          admin_email: formData.email,
-          admin_password: formData.password,
-          name: formData.name
-        });
-        onLogin(response.data.access_token);
-      } else if (currentView === 'forgot') {
-        const response = await axios.post(`${API}/organizations/request-password-reset`, {
-          email: formData.email
-        });
-        setSuccess(response.data.message);
-        if (response.data.debug_code) {
-          setSuccess(response.data.message + ` Your reset code is: ${response.data.debug_code}`);
-          setCurrentView('reset');
-        }
-      } else if (currentView === 'reset') {
-        await axios.post(`${API}/organizations/reset-password`, {
-          email: formData.email,
-          new_password: formData.newPassword,
-          reset_code: formData.resetCode
-        });
-        setSuccess('Password reset successful! You can now login with your new password.');
-        setTimeout(() => {
-          setCurrentView('login');
-          setSuccess('');
-        }, 3000);
-      }
+      const endpoint = isLogin ? '/organizations/login' : '/organizations/register';
+      const data = isLogin 
+        ? { email: formData.email, password: formData.password }
+        : { admin_email: formData.email, admin_password: formData.password, name: formData.name };
+
+      const response = await axios.post(`${API}${endpoint}`, data);
+      onLogin(response.data.access_token);
     } catch (error) {
-      setError(error.response?.data?.detail || 'Operation failed');
+      setError(error.response?.data?.detail || 'Authentication failed');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const renderForm = () => {
-    switch (currentView) {
-      case 'login':
-        return (
-          <>
-            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-              Sign in to your account
-            </h2>
-            <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-              <div className="space-y-4">
-                <input
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Email address"
-                />
-                <input
-                  type="password"
-                  required
-                  value={formData.password}
-                  onChange={(e) => setFormData({...formData, password: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Password"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-blue-600 text-white font-medium py-2 px-4 rounded-md hover:bg-blue-700 disabled:bg-gray-400"
-              >
-                {loading ? 'Signing in...' : 'Sign In'}
-              </button>
-
-              <div className="text-center space-y-2">
-                <button
-                  type="button"
-                  onClick={() => setCurrentView('forgot')}
-                  className="text-blue-600 hover:text-blue-500 text-sm"
-                >
-                  Forgot your password?
-                </button>
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => setCurrentView('register')}
-                    className="text-blue-600 hover:text-blue-500 text-sm"
-                  >
-                    Don't have an account? Sign up
-                  </button>
-                </div>
-              </div>
-            </form>
-          </>
-        );
-
-      case 'register':
-        return (
-          <>
-            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-              Create your organization
-            </h2>
-            <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-              <div className="space-y-4">
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Organization Name"
-                />
-                <input
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Email address"
-                />
-                <input
-                  type="password"
-                  required
-                  value={formData.password}
-                  onChange={(e) => setFormData({...formData, password: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Password"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-blue-600 text-white font-medium py-2 px-4 rounded-md hover:bg-blue-700 disabled:bg-gray-400"
-              >
-                {loading ? 'Creating account...' : 'Create Account'}
-              </button>
-
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={() => setCurrentView('login')}
-                  className="text-blue-600 hover:text-blue-500 text-sm"
-                >
-                  Already have an account? Sign in
-                </button>
-              </div>
-            </form>
-          </>
-        );
-
-      case 'forgot':
-        return (
-          <>
-            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-              Reset your password
-            </h2>
-            <p className="mt-2 text-center text-sm text-gray-600">
-              Enter your email address and we'll generate a reset code
-            </p>
-            <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-              <div className="space-y-4">
-                <input
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Email address"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-blue-600 text-white font-medium py-2 px-4 rounded-md hover:bg-blue-700 disabled:bg-gray-400"
-              >
-                {loading ? 'Generating reset code...' : 'Get Reset Code'}
-              </button>
-
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={() => setCurrentView('login')}
-                  className="text-blue-600 hover:text-blue-500 text-sm"
-                >
-                  Back to sign in
-                </button>
-              </div>
-            </form>
-          </>
-        );
-
-      case 'reset':
-        return (
-          <>
-            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-              Enter reset code
-            </h2>
-            <p className="mt-2 text-center text-sm text-gray-600">
-              Enter the 6-digit reset code and your new password
-            </p>
-            <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-              <div className="space-y-4">
-                <input
-                  type="text"
-                  required
-                  value={formData.resetCode}
-                  onChange={(e) => setFormData({...formData, resetCode: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-lg tracking-widest"
-                  placeholder="000000"
-                  maxLength="6"
-                  pattern="[0-9]{6}"
-                />
-                <input
-                  type="password"
-                  required
-                  value={formData.newPassword}
-                  onChange={(e) => setFormData({...formData, newPassword: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="New password"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-blue-600 text-white font-medium py-2 px-4 rounded-md hover:bg-blue-700 disabled:bg-gray-400"
-              >
-                {loading ? 'Resetting password...' : 'Reset Password'}
-              </button>
-
-              <div className="text-center space-y-2">
-                <button
-                  type="button"
-                  onClick={() => setCurrentView('forgot')}
-                  className="text-blue-600 hover:text-blue-500 text-sm"
-                >
-                  Need a new reset code?
-                </button>
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => setCurrentView('login')}
-                    className="text-blue-600 hover:text-blue-500 text-sm"
-                  >
-                    Back to sign in
-                  </button>
-                </div>
-              </div>
-            </form>
-          </>
-        );
-
-      default:
-        return null;
     }
   };
 
@@ -398,20 +146,64 @@ const AuthPage = ({ onLogin }) => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          {renderForm()}
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            {isLogin ? 'Sign in to your account' : 'Create your organization'}
+          </h2>
+        </div>
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <div className="space-y-4">
+            {!isLogin && (
+              <input
+                type="text"
+                required
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Organization Name"
+              />
+            )}
+            <input
+              type="email"
+              required
+              value={formData.email}
+              onChange={(e) => setFormData({...formData, email: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Email address"
+            />
+            <input
+              type="password"
+              required
+              value={formData.password}
+              onChange={(e) => setFormData({...formData, password: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Password"
+            />
+          </div>
 
           {error && (
-            <div className="mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
               {error}
             </div>
           )}
 
-          {success && (
-            <div className="mt-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md">
-              {success}
-            </div>
-          )}
-        </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-blue-600 text-white font-medium py-2 px-4 rounded-md hover:bg-blue-700 disabled:bg-gray-400"
+          >
+            {loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Create Account')}
+          </button>
+
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={() => setIsLogin(!isLogin)}
+              className="text-blue-600 hover:text-blue-500"
+            >
+              {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
