@@ -1124,6 +1124,25 @@ async def configure_bbms(
     
     return {"message": "BBMS credentials configured successfully"}
 
+@api_router.post("/organizations/bbms-setup")
+async def setup_bbms_merchant_ids(
+    setup_data: BBMSSetup,
+    org_id: str = Depends(verify_token)
+):
+    """Setup BBMS merchant account IDs for test and production"""
+    await db.organizations.update_one(
+        {"id": org_id},
+        {
+            "$set": {
+                "bb_test_merchant_id": setup_data.test_merchant_id,
+                "bb_production_merchant_id": setup_data.production_merchant_id,
+                "updated_at": datetime.utcnow()
+            }
+        }
+    )
+    
+    return {"message": "BBMS merchant account IDs configured successfully"}
+
 @api_router.get("/organizations/me")
 async def get_my_organization(org_id: str = Depends(verify_token)):
     """Get current organization details"""
