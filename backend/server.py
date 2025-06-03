@@ -1143,6 +1143,142 @@ async def setup_bbms_merchant_ids(
     
     return {"message": "BBMS merchant account IDs configured successfully"}
 
+@app.get("/api/developer-instructions")
+async def get_developer_instructions():
+    """Get setup instructions for SKY App Developers"""
+    return HTMLResponse("""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>SKY App Developer Setup Instructions</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-gray-50 min-h-screen py-8">
+        <div class="max-w-4xl mx-auto px-4">
+            <div class="bg-white rounded-lg shadow-lg p-8">
+                <h1 class="text-3xl font-bold text-gray-800 mb-8">🏗️ SKY App Developer Setup Guide</h1>
+                
+                <div class="prose max-w-none">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+                        <h2 class="text-xl font-semibold text-blue-800 mb-3">📋 Quick Overview</h2>
+                        <p class="text-blue-700">
+                            This guide is for <strong>developers</strong> setting up the Blackbaud SKY API integration for the donation platform. 
+                            Organization admins (app users) will have a simplified interface that only requires their merchant account IDs.
+                        </p>
+                    </div>
+
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Step 1: Create Blackbaud Developer Application</h2>
+                    
+                    <div class="space-y-4 mb-8">
+                        <div class="border-l-4 border-green-500 pl-4">
+                            <h3 class="font-semibold text-gray-800">1.1 Access the Developer Portal</h3>
+                            <p class="text-gray-600">Visit: <a href="https://developer.sky.blackbaud.com" target="_blank" class="text-blue-600 underline">https://developer.sky.blackbaud.com</a></p>
+                            <p class="text-gray-600">Sign in with your Blackbaud account credentials</p>
+                        </div>
+                        
+                        <div class="border-l-4 border-green-500 pl-4">
+                            <h3 class="font-semibold text-gray-800">1.2 Create New Application</h3>
+                            <ul class="list-disc list-inside text-gray-600 space-y-1">
+                                <li>Navigate to "My Applications" → "Create Application"</li>
+                                <li>Fill in application details (name, description, website)</li>
+                                <li>Application Type: <strong>Web Application</strong></li>
+                            </ul>
+                        </div>
+                        
+                        <div class="border-l-4 border-yellow-500 pl-4">
+                            <h3 class="font-semibold text-gray-800">1.3 Configure API Access & Redirect URI</h3>
+                            <ul class="list-disc list-inside text-gray-600 space-y-1">
+                                <li>Enable <strong>"Payments API"</strong></li>
+                                <li>Enable <strong>"OAuth 2.0"</strong></li>
+                                <li>Set Redirect URI to: <code class="bg-gray-100 px-2 py-1 rounded text-sm">${window.location.origin}/api/blackbaud-callback</code></li>
+                            </ul>
+                            <div class="bg-yellow-100 border border-yellow-300 rounded p-3 mt-2">
+                                <p class="text-yellow-800 text-sm">
+                                    ⚠️ <strong>Critical:</strong> The redirect URI must match exactly (including https and path)
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="border-l-4 border-blue-500 pl-4">
+                            <h3 class="font-semibold text-gray-800">1.4 Record Your Credentials</h3>
+                            <p class="text-gray-600">Save these values from your application:</p>
+                            <ul class="list-disc list-inside text-gray-600 space-y-1">
+                                <li><strong>Application ID</strong> (Client ID)</li>
+                                <li><strong>Application Secret</strong> (Client Secret)</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Step 2: Configure Environment Variables</h2>
+                    
+                    <div class="bg-gray-900 text-gray-100 p-4 rounded-lg mb-6">
+                        <h3 class="text-lg font-semibold mb-3">Backend .env Configuration:</h3>
+                        <pre class="text-sm"><code># Blackbaud SKY API Configuration
+BB_APPLICATION_ID="your-application-id-here"
+BB_APPLICATION_SECRET="your-application-secret-here"
+BB_REDIRECT_URI="${window.location.origin}/api/blackbaud-callback"
+
+# These can use demo values for platform testing
+BB_PUBLIC_KEY="737471a1-1e7e-40ab-aa3a-97d0fb806e6f"
+BB_PAYMENT_API_SUBSCRIPTION="e08faf45a0e643e6bfe042a8e4488afb"</code></pre>
+                    </div>
+
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Step 3: User Experience</h2>
+                    
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
+                        <h3 class="text-lg font-semibold text-green-800 mb-3">✨ Simplified for Organization Admins</h3>
+                        <p class="text-green-700 mb-3">
+                            Organization admins (your app users) will only need to provide:
+                        </p>
+                        <ul class="list-disc list-inside text-green-700 space-y-1">
+                            <li><strong>Test Merchant Account ID</strong> - for sandbox payments</li>
+                            <li><strong>Production Merchant Account ID</strong> - for live payments</li>
+                            <li>Click "Connect with Blackbaud" to complete OAuth2 setup</li>
+                        </ul>
+                        <p class="text-green-700 mt-3">
+                            No technical setup, redirect URIs, or API keys required from users!
+                        </p>
+                    </div>
+
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Step 4: Documentation Links</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <h3 class="font-semibold text-gray-800 mb-2">📚 API Documentation</h3>
+                            <ul class="space-y-2 text-sm">
+                                <li><a href="https://developer.sky.blackbaud.com/docs/" target="_blank" class="text-blue-600 underline">SKY API Developer Guide</a></li>
+                                <li><a href="https://developer.sky.blackbaud.com/api#api=payments" target="_blank" class="text-blue-600 underline">Payments API Reference</a></li>
+                                <li><a href="https://developer.sky.blackbaud.com/docs/authorization/" target="_blank" class="text-blue-600 underline">OAuth2 Authorization Guide</a></li>
+                            </ul>
+                        </div>
+                        
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <h3 class="font-semibold text-gray-800 mb-2">🛠️ Testing Resources</h3>
+                            <ul class="space-y-2 text-sm">
+                                <li><a href="https://kb.blackbaud.com/knowledgebase/articles/Article/64901" target="_blank" class="text-blue-600 underline">Test Credit Card Numbers</a></li>
+                                <li><a href="https://host.nxt.blackbaud.com/payment-portal/" target="_blank" class="text-blue-600 underline">Merchant Services Portal</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-red-800 mb-3">🚨 Important Notes</h3>
+                        <ul class="list-disc list-inside text-red-700 space-y-1">
+                            <li>The redirect URI must be configured in your Blackbaud application <strong>before</strong> users can connect</li>
+                            <li>Users will need separate test and production merchant account IDs from Blackbaud BBMS</li>
+                            <li>The platform automatically handles test vs production mode switching</li>
+                            <li>Test payments use Blackbaud's sandbox environment with test card numbers</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
+    """)
+
 @api_router.get("/organizations/me")
 async def get_my_organization(org_id: str = Depends(verify_token)):
     """Get current organization details"""
