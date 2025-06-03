@@ -329,7 +329,10 @@ const Dashboard = ({ organization, authToken, setCurrentView }) => {
               <p className="text-orange-700 mt-1">
                 Configure your Blackbaud BBMS credentials to start accepting donations.
               </p>
-              <button className="mt-3 bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700">
+              <button 
+                onClick={() => setCurrentView('bbms-config')}
+                className="mt-3 bg-orange-600 text-white px-4 py-2 rounded-md hover:bg-orange-700"
+              >
                 Setup Payment Processing
               </button>
             </div>
