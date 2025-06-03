@@ -15,7 +15,7 @@ import uuid
 from urllib.parse import urlparse, parse_qs
 
 class BlackbaudPaymentTester:
-    def __init__(self, base_url="https://8b2b653e-9dbe-4e45-9ea1-8a28a59c538d.preview.emergentagent.com"):
+    def __init__(self, base_url="https://e86128f5-e40b-4462-b145-2b55c23a63a0.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.token = None
