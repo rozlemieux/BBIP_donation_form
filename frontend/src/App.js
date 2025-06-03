@@ -1213,17 +1213,60 @@ const EmbedCode = ({ organization }) => {
           </div>
 
           <div className="mt-6">
-            <h4 className="font-medium text-gray-800 mb-3">Preview</h4>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50">
-              <iframe
-                src={`${BACKEND_URL}/api/embed/donate/${organization?.id}`}
-                width="100%"
-                height="400"
-                frameBorder="0"
-                className="rounded-lg"
-                title="Donation Form Preview"
-              />
+            <div className="flex justify-between items-center mb-3">
+              <h4 className="font-medium text-gray-800">Preview</h4>
+              <div className="flex space-x-2">
+                <a
+                  href={`${BACKEND_URL}/api/embed/test-donate`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded-md hover:bg-blue-200 transition-colors"
+                >
+                  🧪 Test Form (New Window)
+                </a>
+                {organization?.test_mode && (
+                  <span className="text-sm bg-yellow-100 text-yellow-700 px-3 py-1 rounded-md">
+                    Test Mode Active
+                  </span>
+                )}
+              </div>
             </div>
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 bg-gray-50">
+              {organization?.has_bbms_configured ? (
+                <iframe
+                  src={`${BACKEND_URL}/api/embed/donate/${organization?.id}`}
+                  width="100%"
+                  height="400"
+                  frameBorder="0"
+                  className="rounded-lg"
+                  title="Donation Form Preview"
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center h-64 text-gray-500 space-y-4">
+                  <div className="text-4xl">⚠️</div>
+                  <div className="text-center">
+                    <h5 className="font-medium text-gray-800 mb-2">Preview Unavailable</h5>
+                    <p className="text-sm">Configure your Blackbaud BBMS credentials first to preview the donation form.</p>
+                    <a
+                      href={`${BACKEND_URL}/api/embed/test-donate`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block mt-3 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm"
+                    >
+                      🧪 Try Test Form Instead
+                    </a>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {organization?.test_mode && organization?.has_bbms_configured && (
+              <div className="mt-3 text-center">
+                <p className="text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-2">
+                  🧪 <strong>Test Mode:</strong> This preview uses sandbox payments. No real money will be charged.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
