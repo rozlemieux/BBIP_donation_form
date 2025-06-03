@@ -247,17 +247,65 @@ backend:
         comment: "Verified that all test endpoints work with various donation amounts ($25, $50, $100) as required. The complete donation flow from form to configuration to processing is fully functional without requiring OAuth2 authentication, making these endpoints ideal for testing purposes."
 
 frontend:
-  - task: "Frontend Integration"
+  - task: "Updated Embed Page"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "The Embed Page has been updated with 'Test Form (New Window)' link, proper fallback when BBMS isn't configured, and test mode indicators"
+
+  - task: "Dashboard Quick Actions"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Dashboard Quick Actions have been updated with 'Setup Payment Processing' button linking to BBMS Config page and 'Test Payment Flow' quick action"
+
+  - task: "BBMS Configuration Page"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "BBMS Configuration Page has been updated with 'Test Payment Flow' button and improved status messages"
+
+  - task: "Form Preview and Links"
     implemented: true
     working: "NA"
     file: "/app/frontend/src/App.js"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
-        comment: "Frontend integration is not part of this testing scope"
+        comment: "Form Preview and Links have been updated with iframe preview functionality, test mode warnings and indicators"
+
+  - task: "General UI Review"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "General UI has been updated to ensure no broken links or buttons, responsive design, and proper navigation"
 
 metadata:
   created_by: "testing_agent"
