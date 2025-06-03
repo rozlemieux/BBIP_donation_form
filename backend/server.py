@@ -2865,15 +2865,6 @@ async def oauth_callback_direct(code: str = None, state: str = None, error: str 
     </html>
     """)
 
-# CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
