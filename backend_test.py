@@ -773,81 +773,126 @@ def test_blackbaud_checkout_integration(tester):
     org_id = tester.organization_id
     print(f"Using organization ID: {org_id}")
     
-    # Test 1: Test /api/donate endpoint
-    print("Test 1: Testing /api/donate endpoint...")
+    # Test both production and test modes
+    test_modes = [
+        {"mode": "production", "test_mode": False},
+        {"mode": "test", "test_mode": True}
+    ]
     
-    # Test with multiple donation amounts as specified in the requirements
-    test_amounts = [25.00, 50.00, 100.00]
     donate_success = True
     
-    for amount in test_amounts:
-        print(f"\n🔍 Testing donation amount: ${amount:.2f}")
+    for mode_config in test_modes:
+        mode_name = mode_config["mode"]
+        test_mode = mode_config["test_mode"]
         
-        donation_data = {
-            "org_id": org_id,
-            "amount": amount,
-            "donor_name": "Test Donor",
-            "donor_email": "test@example.com",
-            "donor_phone": "555-123-4567",
-            "donor_address": "123 Test St, Test City, TS 12345"
-        }
+        print(f"\n=== Testing {mode_name.upper()} Mode ===")
         
+        # Set the organization's test_mode
         try:
-            response = requests.post(f"{api_url}/donate", json=donation_data)
-            print(f"Status Code: {response.status_code}")
+            response = requests.put(
+                f"{api_url}/organizations/test-mode",
+                headers={"Authorization": f"Bearer {tester.token}"},
+                json={"test_mode": test_mode}
+            )
             
             if response.status_code == 200:
-                result = response.json()
-                print(f"Success! Checkout configuration received for ${amount:.2f}:")
-                print(f"  - Success: {result.get('success')}")
-                
-                checkout_config = result.get('checkout_config', {})
-                print(f"  - Public Key: {checkout_config.get('public_key')}")
-                print(f"  - Merchant Account ID: {checkout_config.get('merchant_account_id')}")
-                print(f"  - Amount: ${checkout_config.get('amount')}")
-                print(f"  - Test Mode: {checkout_config.get('test_mode')}")
-                
-                # Verify the checkout configuration has all required fields
-                required_fields = ['public_key', 'merchant_account_id', 'amount', 'currency']
-                missing_fields = [field for field in required_fields if field not in checkout_config]
-                
-                if missing_fields:
-                    print(f"ERROR: Missing required fields in checkout configuration: {missing_fields}")
-                    donate_success = False
-                else:
-                    print("All required fields present in checkout configuration.")
-                    
-                # Verify the public key matches the expected value
-                expected_public_key = "737471a1-1e7e-40ab-aa3a-97d0fb806e6f"
-                if checkout_config.get('public_key') == expected_public_key:
-                    print(f"✅ Public key matches expected value: {expected_public_key}")
-                else:
-                    print(f"⚠️ Public key does not match expected value.")
-                    print(f"  Expected: {expected_public_key}")
-                    print(f"  Actual: {checkout_config.get('public_key')}")
-                    
-                # Verify the merchant ID matches the expected value
-                expected_merchant_id = "96563c2e-c97a-4db1-a0ed-1b2a8219f110"
-                if checkout_config.get('merchant_account_id') == expected_merchant_id:
-                    print(f"✅ Merchant ID matches expected value: {expected_merchant_id}")
-                else:
-                    print(f"⚠️ Merchant ID does not match expected value.")
-                    print(f"  Expected: {expected_merchant_id}")
-                    print(f"  Actual: {checkout_config.get('merchant_account_id')}")
-                    
-                # Verify the amount matches what we sent
-                if float(checkout_config.get('amount')) == amount:
-                    print(f"✅ Amount matches expected value: ${amount:.2f}")
-                else:
-                    print(f"⚠️ Amount does not match expected value.")
-                    print(f"  Expected: ${amount:.2f}")
-                    print(f"  Actual: ${checkout_config.get('amount')}")
+                print(f"✅ Successfully set organization test_mode to {test_mode} ({mode_name} mode)")
             else:
-                print(f"ERROR: Failed to get checkout configuration for ${amount:.2f}. Response: {response.text}")
-                donate_success = False
+                print(f"❌ Failed to set test_mode to {test_mode}. Status: {response.status_code}, Response: {response.text}")
+                continue
         except Exception as e:
-            print(f"ERROR: Exception occurred while testing /api/donate for ${amount:.2f}: {str(e)}")
-            donate_success = False
+            print(f"❌ Exception occurred while setting test_mode: {str(e)}")
+            continue
+        
+        # Test with multiple donation amounts as specified in the requirements
+        test_amounts = [25.00, 50.00, 100.00]
+        
+        for amount in test_amounts:
+            print(f"\n🔍 Testing donation amount: ${amount:.2f} in {mode_name} mode")
+            
+            donation_data = {
+                "org_id": org_id,
+                "amount": amount,
+                "donor_name": "Test Donor",
+                "donor_email": "test@example.com",
+                "donor_phone": "555-123-4567",
+                "donor_address": "123 Test St, Test City, TS 12345"
+            }
+            
+            try:
+                response = requests.post(f"{api_url}/donate", json=donation_data)
+                print(f"Status Code: {response.status_code}")
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    print(f"Success! Checkout configuration received for ${amount:.2f}:")
+                    print(f"  - Success: {result.get('success')}")
+                    
+                    checkout_config = result.get('checkout_config', {})
+                    print(f"  - Public Key: {checkout_config.get('public_key')}")
+                    print(f"  - Merchant Account ID: {checkout_config.get('merchant_account_id')}")
+                    print(f"  - Amount: ${checkout_config.get('amount')}")
+                    print(f"  - Test Mode: {checkout_config.get('test_mode')}")
+                    print(f"  - Process Mode: {checkout_config.get('process_mode')}")
+                    
+                    # Verify the checkout configuration has all required fields
+                    required_fields = ['public_key', 'merchant_account_id', 'amount', 'currency', 'process_mode']
+                    missing_fields = [field for field in required_fields if field not in checkout_config]
+                    
+                    if missing_fields:
+                        print(f"❌ ERROR: Missing required fields in checkout configuration: {missing_fields}")
+                        donate_success = False
+                    else:
+                        print("✅ All required fields present in checkout configuration.")
+                    
+                    # Verify process_mode matches the expected value based on test_mode
+                    expected_process_mode = "test" if test_mode else "production"
+                    actual_process_mode = checkout_config.get('process_mode')
+                    
+                    if actual_process_mode == expected_process_mode:
+                        print(f"✅ Process mode matches expected value: {expected_process_mode}")
+                    else:
+                        print(f"❌ ERROR: Process mode does not match expected value.")
+                        print(f"  Expected: {expected_process_mode}")
+                        print(f"  Actual: {actual_process_mode}")
+                        donate_success = False
+                    
+                    # Verify test_mode matches what we set
+                    actual_test_mode = checkout_config.get('test_mode')
+                    if actual_test_mode == test_mode:
+                        print(f"✅ Test mode matches expected value: {test_mode}")
+                    else:
+                        print(f"❌ ERROR: Test mode does not match expected value.")
+                        print(f"  Expected: {test_mode}")
+                        print(f"  Actual: {actual_test_mode}")
+                        donate_success = False
+                    
+                    # Verify the merchant ID matches the expected value
+                    expected_merchant_id = "96563c2e-c97a-4db1-a0ed-1b2a8219f110"
+                    actual_merchant_id = checkout_config.get('merchant_account_id')
+                    
+                    if actual_merchant_id == expected_merchant_id:
+                        print(f"✅ Merchant ID matches expected value: {expected_merchant_id}")
+                    else:
+                        print(f"❌ ERROR: Merchant ID does not match expected value.")
+                        print(f"  Expected: {expected_merchant_id}")
+                        print(f"  Actual: {actual_merchant_id}")
+                        donate_success = False
+                    
+                    # Verify the amount matches what we sent
+                    if float(checkout_config.get('amount')) == amount:
+                        print(f"✅ Amount matches expected value: ${amount:.2f}")
+                    else:
+                        print(f"❌ ERROR: Amount does not match expected value.")
+                        print(f"  Expected: ${amount:.2f}")
+                        print(f"  Actual: ${checkout_config.get('amount')}")
+                        donate_success = False
+                else:
+                    print(f"❌ ERROR: Failed to get checkout configuration for ${amount:.2f} in {mode_name} mode. Response: {response.text}")
+                    donate_success = False
+            except Exception as e:
+                print(f"❌ ERROR: Exception occurred while testing /api/donate for ${amount:.2f} in {mode_name} mode: {str(e)}")
+                donate_success = False
     
     # Test 2: Test /api/process-transaction endpoint
     print("\nTest 2: Testing /api/process-transaction endpoint...")
