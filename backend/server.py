@@ -1208,12 +1208,16 @@ async def create_donation(donation: DonationRequest, authorization: str = Header
         logging.info(f"Organization found: {org.get('name', 'Unknown')}")
         logging.info(f"Organization data keys: {list(org.keys())}")
         
-        bbms_config = org.get("bbms_config", {})
-        encrypted_access_token = bbms_config.get("access_token")
+        # Get BBMS configuration - check both new and legacy formats
+        encrypted_access_token = org.get("bb_access_token")  # New format (OAuth2 and manual)
+        if not encrypted_access_token:
+            # Legacy format fallback
+            bbms_config = org.get("bbms_config", {})
+            encrypted_access_token = bbms_config.get("access_token")
+        
         merchant_id = org.get("bb_merchant_id")  # Get merchant ID from organization data
         
-        logging.info(f"BBMS config present: {bool(bbms_config)}")
-        logging.info(f"Access token present: {bool(encrypted_access_token)}")
+        logging.info(f"Access token present (bb_access_token): {bool(encrypted_access_token)}")
         logging.info(f"Merchant ID: {merchant_id}")
         
         if not encrypted_access_token:
