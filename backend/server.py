@@ -1497,7 +1497,12 @@ async def get_organization_transactions(
         raise HTTPException(403, "Access denied")
     
     # Query the donations collection with the correct field name
-    transactions = await db["donations"].find({"organization_id": org_id}).sort("created_at", -1).to_list(100)
+    # Exclude the MongoDB _id field to avoid serialization issues
+    transactions = await db["donations"].find(
+        {"organization_id": org_id}, 
+        {"_id": 0}  # Exclude the _id field
+    ).sort("created_at", -1).to_list(100)
+    
     return transactions
 
 # Embed route for iframe - moved to API prefix to ensure it reaches backend
