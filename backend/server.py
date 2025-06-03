@@ -1212,6 +1212,8 @@ async def create_donation(donation: DonationRequest, authorization: str = Header
         # Get organization's test mode setting
         org_test_mode = org.get("test_mode", True)
         
+        logging.info(f"Organization {organization_id} test_mode setting: {org_test_mode}")
+        
         # Create checkout configuration for frontend using organization's mode setting
         checkout_config = await bb_client.create_payment_checkout(
             donation, merchant_id, access_token, test_mode=org_test_mode
