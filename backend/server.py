@@ -1787,7 +1787,9 @@ async def serve_donation_embed(org_id: str):
             return await serve_test_donation_embed()
         
         bbms_config = org.get("bbms_config", {})
-        if not bbms_config.get("access_token"):
+        # Check both new and legacy formats for access token
+        has_access_token = bool(org.get("bb_access_token")) or bool(bbms_config.get("access_token"))
+        if not has_access_token:
             # Fallback to test form if not configured
             return await serve_test_donation_embed()
         
