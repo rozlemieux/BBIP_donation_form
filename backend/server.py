@@ -1199,20 +1199,21 @@ async def create_donation(donation: DonationRequest, authorization: str = Header
         
         bbms_config = org.get("bbms_config", {})
         encrypted_access_token = bbms_config.get("access_token")
+        merchant_id = org.get("bb_merchant_id")  # Get merchant ID from organization data
         
         if not encrypted_access_token:
             raise HTTPException(400, "Organization has not configured Blackbaud BBMS access")
         
+        if not merchant_id:
+            raise HTTPException(400, "Organization merchant ID not configured")
+        
         # Decrypt the access token
         access_token = decrypt_data(encrypted_access_token)
-        
-        # Get the merchant ID from environment
-        merchant_id = os.environ.get('BB_MERCHANT_ACCOUNT_ID')
         
         # Get organization's test mode setting
         org_test_mode = org.get("test_mode", True)
         
-        logging.info(f"Organization {organization_id} test_mode setting: {org_test_mode}")
+        logging.info(f"Organization {organization_id} test_mode setting: {org_test_mode}, merchant_id: {merchant_id}")
         
         # Create checkout configuration for frontend using organization's mode setting
         checkout_config = await bb_client.create_payment_checkout(
