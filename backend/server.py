@@ -1673,7 +1673,8 @@ async def serve_test_donation_embed():
                         const transactionData = {{
                             key: BB_PUBLIC_KEY, // Using the public key as the transaction key
                             payment_configuration_id: checkoutConfig.merchant_account_id,
-                            Amount: checkoutConfig.amount
+                            Amount: checkoutConfig.amount,
+                            process_mode: checkoutConfig.process_mode || 'test'  // Critical: Controls test vs production mode
                         }};
                         
                         console.log('Transaction data:', transactionData);
