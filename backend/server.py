@@ -1250,6 +1250,7 @@ async def create_test_donation(donation: DonationRequest):
                 "address": getattr(donation, 'donor_address', '')
             },
             "test_mode": True,
+            "process_mode": "test",  # Always test mode for demo purposes
             "return_url": "https://e86128f5-e40b-4462-b145-2b55c23a63a0.preview.emergentagent.com/success",
             "cancel_url": "https://e86128f5-e40b-4462-b145-2b55c23a63a0.preview.emergentagent.com/cancel"
         }
