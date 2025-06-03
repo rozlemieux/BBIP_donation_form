@@ -1175,6 +1175,9 @@ async def toggle_test_mode(
 async def create_donation(donation: DonationRequest, authorization: str = Header(None)):
     """Create a donation and return checkout configuration for frontend JavaScript SDK"""
     try:
+        logging.info(f"=== DONATION REQUEST START ===")
+        logging.info(f"Donation data: {donation.dict()}")
+        
         # Extract organization ID from JWT token if present
         organization_id = None
         if authorization and authorization.startswith("Bearer "):
@@ -1182,24 +1185,36 @@ async def create_donation(donation: DonationRequest, authorization: str = Header
                 token = authorization.split(" ")[1]
                 payload = jwt.decode(token, JWT_SECRET, algorithms=[ALGORITHM])
                 organization_id = payload.get("sub")
+                logging.info(f"Extracted org_id from token: {organization_id}")
             except JWTError:
+                logging.info("Failed to decode JWT token")
                 pass
         
         # If no valid token, extract from donation request
         if not organization_id:
             organization_id = donation.org_id
+            logging.info(f"Using org_id from donation request: {organization_id}")
         
         if not organization_id:
             raise HTTPException(400, "Organization ID required")
         
         # Get organization
+        logging.info(f"Fetching organization with ID: {organization_id}")
         org = await db["organizations"].find_one({"id": organization_id})
         if not org:
+            logging.error(f"Organization not found: {organization_id}")
             raise HTTPException(404, "Organization not found")
+        
+        logging.info(f"Organization found: {org.get('name', 'Unknown')}")
+        logging.info(f"Organization data keys: {list(org.keys())}")
         
         bbms_config = org.get("bbms_config", {})
         encrypted_access_token = bbms_config.get("access_token")
         merchant_id = org.get("bb_merchant_id")  # Get merchant ID from organization data
+        
+        logging.info(f"BBMS config present: {bool(bbms_config)}")
+        logging.info(f"Access token present: {bool(encrypted_access_token)}")
+        logging.info(f"Merchant ID: {merchant_id}")
         
         if not encrypted_access_token:
             raise HTTPException(400, "Organization has not configured Blackbaud BBMS access")
@@ -1213,12 +1228,18 @@ async def create_donation(donation: DonationRequest, authorization: str = Header
         # Get organization's test mode setting
         org_test_mode = org.get("test_mode", True)
         
-        logging.info(f"Organization {organization_id} test_mode setting: {org_test_mode}, merchant_id: {merchant_id}")
+        logging.info(f"=== MODE SETTINGS ===")
+        logging.info(f"Organization {organization_id} test_mode setting: {org_test_mode}")
+        logging.info(f"Merchant ID: {merchant_id}")
         
         # Create checkout configuration for frontend using organization's mode setting
         checkout_config = await bb_client.create_payment_checkout(
             donation, merchant_id, access_token, test_mode=org_test_mode
         )
+        
+        logging.info(f"=== CHECKOUT CONFIG CREATED ===")
+        logging.info(f"Test mode: {checkout_config.get('test_mode')}")
+        logging.info(f"Process mode: {checkout_config.get('process_mode')}")
         
         return {
             "success": True,
