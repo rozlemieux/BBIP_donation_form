@@ -1208,9 +1208,12 @@ async def create_donation(donation: DonationRequest, authorization: str = Header
         # Get the merchant ID from environment
         merchant_id = os.environ.get('BB_MERCHANT_ACCOUNT_ID')
         
-        # Create checkout configuration for frontend
+        # Get organization's test mode setting
+        org_test_mode = org.get("test_mode", True)
+        
+        # Create checkout configuration for frontend using organization's mode setting
         checkout_config = await bb_client.create_payment_checkout(
-            donation, merchant_id, access_token, test_mode=True
+            donation, merchant_id, access_token, test_mode=org_test_mode
         )
         
         return {
