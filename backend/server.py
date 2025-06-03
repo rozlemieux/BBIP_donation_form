@@ -2865,13 +2865,6 @@ async def oauth_callback_direct(code: str = None, state: str = None, error: str 
     </html>
     """)
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
-
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
