@@ -602,7 +602,7 @@ class BlackbaudClient:
                     "address": getattr(donation, 'donor_address', '')
                 },
                 "test_mode": test_mode,
-                "process_mode": "test" if test_mode else "live",  # Critical for Blackbaud mode switching
+                "process_mode": "Test" if test_mode else "Live",  # Critical for Blackbaud mode switching (Test, Live, or Demo)
                 "return_url": f"https://e86128f5-e40b-4462-b145-2b55c23a63a0.preview.emergentagent.com/success",
                 "cancel_url": f"https://e86128f5-e40b-4462-b145-2b55c23a63a0.preview.emergentagent.com/cancel"
             }
