@@ -32,10 +32,7 @@ db = client[db_name]
 app = FastAPI(title="Donation Page Builder API")
 api_router = APIRouter(prefix="/api")
 
-# Include API routes
-app.include_router(api_router)
-
-# CORS
+# CORS - Must be added before including routes
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
@@ -43,6 +40,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include API routes
+app.include_router(api_router)
 
 # Configure logging
 logging.basicConfig(
