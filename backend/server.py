@@ -290,6 +290,14 @@ class BBMSSetup(BaseModel):
     test_merchant_id: Optional[str] = None
     production_merchant_id: Optional[str] = None
 
+class PasswordResetRequest(BaseModel):
+    email: str
+
+class PasswordReset(BaseModel):
+    email: str
+    new_password: str
+    reset_code: str
+
 class BBMSOAuthStart(BaseModel):
     merchant_id: str
     app_id: str
