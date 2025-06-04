@@ -1393,6 +1393,10 @@ async def update_form_settings(
     current_org: str = Depends(verify_token)
 ):
     """Update organization form settings"""
+    # Verify that the user can only update their own organization
+    if org_id != current_org:
+        raise HTTPException(403, "Access denied")
+    
     await db.organizations.update_one(
         {"id": org_id},
         {
