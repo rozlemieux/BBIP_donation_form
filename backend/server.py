@@ -493,8 +493,8 @@ class BlackbaudClient:
                     "address": getattr(donation, 'donor_address', '')
                 },
                 "test_mode": test_mode,
-                "return_url": "https://e86128f5-e40b-4462-b145-2b55c23a63a0.preview.emergentagent.com/success",
-                "cancel_url": "https://e86128f5-e40b-4462-b145-2b55c23a63a0.preview.emergentagent.com/cancel"
+                "return_url": "https://gitflow.preview.emergentagent.com/success",
+                "cancel_url": "https://gitflow.preview.emergentagent.com/cancel"
             }
             
             mode_text = "sandbox" if test_mode else "production"
