@@ -1825,7 +1825,7 @@ async def serve_test_donation_embed(org_id: Optional[str] = None):
     <body>
         <div id="donation-root" class="max-w-md mx-auto"></div>
         <script>
-            const API_BASE = 'https://119fa407-7ed5-4661-8cb4-d43cc86d1517.preview.emergentagent.com/api';
+            const API_BASE = 'https://e86128f5-e40b-4462-b145-2b55c23a63a0.preview.emergentagent.com/api';
             const BB_PUBLIC_KEY = '{public_key}';
             const ORG_ID = '{org_id or "test-org-id"}';
             const ORG_TEST_MODE = {str(org_test_mode).lower()};
