@@ -1139,7 +1139,7 @@ async def setup_bbms_merchant_ids(
     org_id: str = Depends(verify_token)
 ):
     """Setup BBMS merchant account IDs for test and production"""
-    await db.organizations.update_one(
+    result = await db["organizations"].update_one(
         {"id": org_id},
         {
             "$set": {
@@ -1149,6 +1149,8 @@ async def setup_bbms_merchant_ids(
             }
         }
     )
+    
+    logging.info(f"BBMS setup update result: matched={result.matched_count}, modified={result.modified_count}")
     
     return {"message": "BBMS merchant account IDs configured successfully"}
 
