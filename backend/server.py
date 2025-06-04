@@ -1022,7 +1022,7 @@ async def test_oauth_credentials(
     try:
         # Test if we can generate a proper OAuth URL with user's credentials
         from urllib.parse import urlencode
-        redirect_uri = "https://gitflow.preview.emergentagent.com/api/blackbaud-callback"
+        redirect_uri = "https://giftflow.preview.emergentagent.com/api/blackbaud-callback"
         
         params = {
             "client_id": test_data.app_id,
