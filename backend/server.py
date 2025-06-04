@@ -1386,7 +1386,7 @@ async def get_my_organization(org_id: str = Depends(verify_token)):
         "created_at": organization.created_at
     }
 
-@api_router.put("/organizations/form-settings")
+@api_router.put("/organizations/{org_id}/form-settings")
 async def update_form_settings(
     settings: FormSettings,
     org_id: str = Depends(verify_token)
