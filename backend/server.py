@@ -2642,7 +2642,7 @@ async def serve_donation_embed(org_id: str):
                 async function handlePaymentSuccess(transactionToken, donationData) {{
                     try {{
                         // Process the transaction token with our backend
-                        const response = await fetch(`${{API_BASE}}/process-transaction`, {{
+                        const response = await fetch(`${{API_BASE}}/api/process-transaction`, {{
                             method: 'POST',
                             headers: {{
                                 'Content-Type': 'application/json'
