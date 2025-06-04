@@ -831,7 +831,7 @@ const ModeSettings = ({ organization, authToken, onUpdate }) => {
     setLoading(true);
 
     try {
-      await axios.put(`${API}/organizations/test-mode`, 
+      await axios.put(`${API}/api/organizations/test-mode`, 
         { test_mode: testMode }, 
         { headers: { Authorization: `Bearer ${authToken}` } }
       );
