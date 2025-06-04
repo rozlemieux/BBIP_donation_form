@@ -588,7 +588,7 @@ const BBMSConfig = ({ organization, authToken, onUpdate }) => {
     setError('');
 
     try {
-      await axios.post(`${API}/organizations/bbms-setup`, merchantIds, {
+      await axios.post(`${API}/api/organizations/bbms-setup`, merchantIds, {
         headers: { Authorization: `Bearer ${authToken}` }
       });
       setSuccess(true);
