@@ -226,7 +226,7 @@ const Dashboard = ({ organization, authToken }) => {
 
   const fetchStats = async () => {
     try {
-      const response = await axios.get(`${API}/organizations/${organization.id}/transactions`, {
+      const response = await axios.get(`${API}/api/organizations/${organization.id}/transactions`, {
         headers: { Authorization: `Bearer ${authToken}` }
       });
       const transactions = response.data;
