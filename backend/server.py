@@ -897,7 +897,7 @@ async def handle_bbms_oauth_callback(callback_data: BBMSOAuthCallback):
         logging.info(f"Using app ID: {temp_app_id[:8]}... for token exchange")
         
         # Exchange code for tokens using user's app credentials
-        redirect_uri = "https://119fa407-7ed5-4661-8cb4-d43cc86d1517.preview.emergentagent.com/api/blackbaud-callback"
+        redirect_uri = "https://e86128f5-e40b-4462-b145-2b55c23a63a0.preview.emergentagent.com/api/blackbaud-callback"
         
         import base64
         import httpx
