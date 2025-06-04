@@ -1798,16 +1798,24 @@ async def get_organization_transactions(
 
 # Embed route for iframe - moved to API prefix to ensure it reaches backend
 @app.get("/api/embed/test-donate")
-async def serve_test_donation_embed():
+async def serve_test_donation_embed(org_id: Optional[str] = None):
     """Serve test donation form for iframe embedding - works without OAuth2 setup"""
     public_key = os.environ.get('BB_PUBLIC_KEY')
+    
+    # If org_id is provided, get organization info for mode detection
+    org_test_mode = True  # Default to test mode
+    if org_id:
+        org = await db["organizations"].find_one({"id": org_id})
+        if org:
+            org_test_mode = org.get("test_mode", True)
+    
     return HTMLResponse(f"""
     <!DOCTYPE html>
     <html>
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Test Donation Form</title>
+        <title>Demo Donation Form</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <script src="https://payments.blackbaud.com/Checkout/bbCheckout.2.0.js"></script>
         <style>
