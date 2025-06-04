@@ -260,9 +260,9 @@ const Dashboard = ({ organization, authToken }) => {
     },
     {
       title: 'Test Payment Flow',
-      description: 'Open test form in new window',
+      description: 'Open donation form in new window',
       icon: '🧪',
-      action: () => window.open(`${BACKEND_URL}/api/embed/test-donate`, '_blank'),
+      action: () => window.open(`${BACKEND_URL}/api/embed/donate/${organization?.id}`, '_blank'),
       color: 'yellow'
     },
     {
