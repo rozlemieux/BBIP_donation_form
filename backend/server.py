@@ -1827,17 +1827,24 @@ async def serve_test_donation_embed(org_id: Optional[str] = None):
         <script>
             const API_BASE = 'https://e86128f5-e40b-4462-b145-2b55c23a63a0.preview.emergentagent.com/api';
             const BB_PUBLIC_KEY = '{public_key}';
+            const ORG_ID = '{org_id or "test-org-id"}';
+            const ORG_TEST_MODE = {str(org_test_mode).lower()};
             
-            // Test donation form implementation - works without OAuth2
+            // Demo donation form implementation - follows organization mode
             window.addEventListener('DOMContentLoaded', function() {{
                 renderTestDonationForm();
             }});
             
             function renderTestDonationForm() {{
                 const root = document.getElementById('donation-root');
+                const modeIndicator = ORG_TEST_MODE ? 
+                    '<div class="bg-yellow-100 border border-yellow-300 text-yellow-800 px-3 py-2 rounded-md text-sm mb-4">🧪 Demo Form - Test Mode (No real charges)</div>' :
+                    '<div class="bg-green-100 border border-green-300 text-green-800 px-3 py-2 rounded-md text-sm mb-4">🚀 Demo Form - Production Mode (Live payments)</div>';
+                    
                 root.innerHTML = `
                     <div class="bg-white rounded-lg shadow-lg p-6">
-                        <h2 class="text-2xl font-bold text-gray-800 mb-2">Test Organization</h2>
+                        <h2 class="text-2xl font-bold text-gray-800 mb-2">Demo Donation Form</h2>
+                        ${{modeIndicator}}
                         <p class="text-gray-600 mb-6">This is a test donation form demonstrating the Blackbaud Checkout integration.</p>
                         
                         <form id="donation-form" class="space-y-4">
