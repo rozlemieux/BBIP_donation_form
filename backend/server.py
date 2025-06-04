@@ -2067,7 +2067,7 @@ async def serve_test_donation_embed(org_id: Optional[str] = None):
                 
                 async function handleTestPaymentSuccess(transactionToken, donationData) {{
                     try {{
-                        console.log('Processing REAL transaction token:', transactionToken);
+                        console.log('Processing test transaction token:', transactionToken);
                         
                         // Process the REAL transaction token
                         const response = await fetch(`${{API_BASE}}/test-process-transaction`, {{
