@@ -363,15 +363,13 @@ const Dashboard = ({ organization, authToken, setCurrentPage }) => {
   );
 };
 
-const QuickActionCard = ({ title, description, icon, action, color }) => {
-  const [currentPage, setCurrentPage] = useState('');
-  
+const QuickActionCard = ({ title, description, icon, action, color, setCurrentPage }) => {
   const handleClick = () => {
     if (typeof action === 'function') {
       action();
     } else {
-      // This would need to be passed down from parent component
-      window.location.hash = action;
+      // Use the passed navigation function instead of window.location.hash
+      setCurrentPage(action);
     }
   };
 
