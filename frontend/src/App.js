@@ -435,7 +435,7 @@ const FormSettings = ({ organization, authToken, onUpdate }) => {
         preset_amounts: [...settings.preset_amounts].sort((a, b) => a - b)
       };
 
-      await axios.put(`${API}/organizations/${organization.id}/form-settings`, sortedSettings, {
+      await axios.put(`${API}/api/organizations/${organization.id}/form-settings`, sortedSettings, {
         headers: { Authorization: `Bearer ${authToken}` }
       });
       setSuccess(true);
