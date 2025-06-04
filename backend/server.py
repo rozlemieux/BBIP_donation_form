@@ -616,8 +616,8 @@ class BlackbaudClient:
                 },
                 "test_mode": test_mode,
                 "process_mode": "Test" if test_mode else "Live",  # Critical for Blackbaud mode switching (Test, Live, or Demo)
-                "return_url": f"https://e86128f5-e40b-4462-b145-2b55c23a63a0.preview.emergentagent.com/success",
-                "cancel_url": f"https://e86128f5-e40b-4462-b145-2b55c23a63a0.preview.emergentagent.com/cancel"
+                "return_url": f"https://gitflow.preview.emergentagent.com/success",
+                "cancel_url": f"https://gitflow.preview.emergentagent.com/cancel"
             }
             
             logging.info(f"Checkout configuration created for {mode_text} mode")
