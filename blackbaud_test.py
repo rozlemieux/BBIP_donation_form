@@ -7,7 +7,7 @@ import time
 from pprint import pprint
 
 # Get the backend URL from environment or use default
-BACKEND_URL = "https://e86128f5-e40b-4462-b145-2b55c23a63a0.preview.emergentagent.com"
+BACKEND_URL = "https://119fa407-7ed5-4661-8cb4-d43cc86d1517.preview.emergentagent.com"
 API_BASE = f"{BACKEND_URL}/api"
 
 class BlackbaudTestEndpointsTest(unittest.TestCase):

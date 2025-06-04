@@ -495,8 +495,8 @@ class BlackbaudClient:
                     "address": getattr(donation, 'donor_address', '')
                 },
                 "test_mode": test_mode,
-                "return_url": "https://e86128f5-e40b-4462-b145-2b55c23a63a0.preview.emergentagent.com/success",
-                "cancel_url": "https://e86128f5-e40b-4462-b145-2b55c23a63a0.preview.emergentagent.com/cancel"
+                "return_url": "https://119fa407-7ed5-4661-8cb4-d43cc86d1517.preview.emergentagent.com/success",
+                "cancel_url": "https://119fa407-7ed5-4661-8cb4-d43cc86d1517.preview.emergentagent.com/cancel"
             }
             
             mode_text = "sandbox" if test_mode else "production"
@@ -618,8 +618,8 @@ class BlackbaudClient:
                 },
                 "test_mode": test_mode,
                 "process_mode": "Test" if test_mode else "Live",  # Critical for Blackbaud mode switching (Test, Live, or Demo)
-                "return_url": f"https://e86128f5-e40b-4462-b145-2b55c23a63a0.preview.emergentagent.com/success",
-                "cancel_url": f"https://e86128f5-e40b-4462-b145-2b55c23a63a0.preview.emergentagent.com/cancel"
+                "return_url": f"https://119fa407-7ed5-4661-8cb4-d43cc86d1517.preview.emergentagent.com/success",
+                "cancel_url": f"https://119fa407-7ed5-4661-8cb4-d43cc86d1517.preview.emergentagent.com/cancel"
             }
             
             logging.info(f"Checkout configuration created for {mode_text} mode")
@@ -836,7 +836,7 @@ async def start_bbms_oauth(
         
         # Generate OAuth URL using user's app credentials
         from urllib.parse import urlencode
-        redirect_uri = "https://e86128f5-e40b-4462-b145-2b55c23a63a0.preview.emergentagent.com/api/blackbaud-callback"
+        redirect_uri = "https://119fa407-7ed5-4661-8cb4-d43cc86d1517.preview.emergentagent.com/api/blackbaud-callback"
         
         params = {
             "client_id": oauth_data.app_id,
@@ -897,7 +897,7 @@ async def handle_bbms_oauth_callback(callback_data: BBMSOAuthCallback):
         logging.info(f"Using app ID: {temp_app_id[:8]}... for token exchange")
         
         # Exchange code for tokens using user's app credentials
-        redirect_uri = "https://e86128f5-e40b-4462-b145-2b55c23a63a0.preview.emergentagent.com/api/blackbaud-callback"
+        redirect_uri = "https://119fa407-7ed5-4661-8cb4-d43cc86d1517.preview.emergentagent.com/api/blackbaud-callback"
         
         import base64
         import httpx
@@ -1024,7 +1024,7 @@ async def test_oauth_credentials(
     try:
         # Test if we can generate a proper OAuth URL with user's credentials
         from urllib.parse import urlencode
-        redirect_uri = "https://e86128f5-e40b-4462-b145-2b55c23a63a0.preview.emergentagent.com/api/blackbaud-callback"
+        redirect_uri = "https://119fa407-7ed5-4661-8cb4-d43cc86d1517.preview.emergentagent.com/api/blackbaud-callback"
         
         params = {
             "client_id": test_data.app_id,
@@ -1570,8 +1570,8 @@ async def create_test_donation(donation: DonationRequest):
             },
             "test_mode": org_test_mode,
             "process_mode": process_mode,
-            "return_url": "https://e86128f5-e40b-4462-b145-2b55c23a63a0.preview.emergentagent.com/success",
-            "cancel_url": "https://e86128f5-e40b-4462-b145-2b55c23a63a0.preview.emergentagent.com/cancel"
+            "return_url": "https://119fa407-7ed5-4661-8cb4-d43cc86d1517.preview.emergentagent.com/success",
+            "cancel_url": "https://119fa407-7ed5-4661-8cb4-d43cc86d1517.preview.emergentagent.com/cancel"
         }
         
         logging.info(f"Test donation configuration created for ${donation.amount} - Mode: {process_mode}")
@@ -1825,7 +1825,7 @@ async def serve_test_donation_embed(org_id: Optional[str] = None):
     <body>
         <div id="donation-root" class="max-w-md mx-auto"></div>
         <script>
-            const API_BASE = 'https://e86128f5-e40b-4462-b145-2b55c23a63a0.preview.emergentagent.com/api';
+            const API_BASE = 'https://119fa407-7ed5-4661-8cb4-d43cc86d1517.preview.emergentagent.com/api';
             const BB_PUBLIC_KEY = '{public_key}';
             const ORG_ID = '{org_id or "test-org-id"}';
             const ORG_TEST_MODE = {str(org_test_mode).lower()};
@@ -2155,7 +2155,7 @@ async def serve_donation_embed(org_id: str):
             <div id="donation-root" class="max-w-md mx-auto"></div>
             <script>
                 const ORG_ID = '{org_id}';
-                const API_BASE = 'https://e86128f5-e40b-4462-b145-2b55c23a63a0.preview.emergentagent.com/api';
+                const API_BASE = 'https://119fa407-7ed5-4661-8cb4-d43cc86d1517.preview.emergentagent.com/api';
                 const BB_PUBLIC_KEY = '{public_key}';
                 const ORG_TEST_MODE = {str(org_test_mode).lower()};  // Organization's test mode setting
                 
@@ -2468,7 +2468,7 @@ async def serve_donation_embed(org_id: str):
         <div id="donation-root" class="max-w-md mx-auto"></div>
         <script>
             const ORG_ID = '{org_id}';
-            const API_BASE = 'https://e86128f5-e40b-4462-b145-2b55c23a63a0.preview.emergentagent.com/api';
+            const API_BASE = 'https://119fa407-7ed5-4661-8cb4-d43cc86d1517.preview.emergentagent.com/api';
             const BB_PUBLIC_KEY = '{public_key}';
             
             // Simple donation form implementation with Blackbaud Checkout

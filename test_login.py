@@ -3,7 +3,7 @@ import requests
 import json
 
 # Base URL from the frontend .env file
-BASE_URL = "https://e86128f5-e40b-4462-b145-2b55c23a63a0.preview.emergentagent.com"
+BASE_URL = "https://119fa407-7ed5-4661-8cb4-d43cc86d1517.preview.emergentagent.com"
 API_URL = f"{BASE_URL}/api"
 
 # Use the credentials from the previous test
