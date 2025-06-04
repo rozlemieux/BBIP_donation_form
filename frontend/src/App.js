@@ -128,7 +128,7 @@ const AuthPage = ({ onLogin }) => {
     setError('');
 
     try {
-      const endpoint = isLogin ? '/organizations/login' : '/organizations/register';
+      const endpoint = isLogin ? '/api/organizations/login' : '/api/organizations/register';
       const data = isLogin 
         ? { email: formData.email, password: formData.password }
         : { admin_email: formData.email, admin_password: formData.password, name: formData.name };
