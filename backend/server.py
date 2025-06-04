@@ -1375,17 +1375,22 @@ BB_PAYMENT_API_SUBSCRIPTION="e08faf45a0e643e6bfe042a8e4488afb"</code></pre>
 @api_router.get("/organizations/me")
 async def get_my_organization(org_id: str = Depends(verify_token)):
     """Get current organization details"""
-    organization = await get_organization(org_id)
+    # Get raw organization data to include all fields
+    org_data = await db["organizations"].find_one({"id": org_id})
+    if not org_data:
+        raise HTTPException(404, "Organization not found")
     
     # Don't return sensitive data
     return {
-        "id": organization.id,
-        "name": organization.name,
-        "email": organization.admin_email,
-        "has_bbms_configured": bool(organization.bb_access_token),
-        "test_mode": organization.test_mode,
-        "form_settings": organization.form_settings,
-        "created_at": organization.created_at
+        "id": org_data.get("id"),
+        "name": org_data.get("name"),
+        "email": org_data.get("admin_email"),
+        "has_bbms_configured": bool(org_data.get("bb_access_token")),
+        "test_mode": org_data.get("test_mode", True),
+        "bb_test_merchant_id": org_data.get("bb_test_merchant_id"),
+        "bb_production_merchant_id": org_data.get("bb_production_merchant_id"),
+        "form_settings": org_data.get("form_settings", {}),
+        "created_at": org_data.get("created_at")
     }
 
 @api_router.put("/organizations/{org_id}/form-settings")
