@@ -2070,7 +2070,7 @@ async def serve_test_donation_embed(org_id: Optional[str] = None):
                         console.log('Processing REAL transaction token:', transactionToken);
                         
                         // Process the REAL transaction token
-                        const response = await fetch(`${{API_BASE}}/api/test-process-transaction`, {{
+                        const response = await fetch(`${{API_BASE}}/test-process-transaction`, {{
                             method: 'POST',
                             headers: {{
                                 'Content-Type': 'application/json'
