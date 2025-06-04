@@ -2153,7 +2153,7 @@ async def serve_donation_embed(org_id: str):
             <div id="donation-root" class="max-w-md mx-auto"></div>
             <script>
                 const ORG_ID = '{org_id}';
-                const API_BASE = 'https://e86128f5-e40b-4462-b145-2b55c23a63a0.preview.emergentagent.com/api';
+                const API_BASE = 'https://gitflow.preview.emergentagent.com/api';
                 const BB_PUBLIC_KEY = '{public_key}';
                 const ORG_TEST_MODE = {str(org_test_mode).lower()};  // Organization's test mode setting
                 
