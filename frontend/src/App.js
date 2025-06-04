@@ -1195,14 +1195,14 @@ const EmbedCode = ({ organization }) => {
                   rel="noopener noreferrer"
                   className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded-md hover:bg-blue-200 transition-colors"
                 >
-                  🧪 Demo Form (New Window)
+                  🧪 Demo Form (Always Test Mode)
                 </a>
                 <span className={`text-sm px-3 py-1 rounded-md ${
                   organization?.test_mode 
                     ? 'bg-yellow-100 text-yellow-700' 
                     : 'bg-green-100 text-green-700'
                 }`}>
-                  {organization?.test_mode ? 'Test Mode' : 'Production Mode'}
+                  Organization: {organization?.test_mode ? 'Test Mode' : 'Production Mode'}
                 </span>
               </div>
             </div>
