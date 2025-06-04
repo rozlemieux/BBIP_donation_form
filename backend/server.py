@@ -1550,7 +1550,7 @@ async def create_test_donation(donation: DonationRequest):
         raise HTTPException(500, f"Internal server error: {str(e)}")
 
 
-@app.post("/api/test-process-transaction")
+@api_router.post("/test-process-transaction")
 async def process_test_transaction(request: dict):
     """Process a test transaction token (demonstration purposes)"""
     try:
