@@ -1570,8 +1570,8 @@ async def create_test_donation(donation: DonationRequest):
             },
             "test_mode": org_test_mode,
             "process_mode": process_mode,
-            "return_url": "https://119fa407-7ed5-4661-8cb4-d43cc86d1517.preview.emergentagent.com/success",
-            "cancel_url": "https://119fa407-7ed5-4661-8cb4-d43cc86d1517.preview.emergentagent.com/cancel"
+            "return_url": "https://e86128f5-e40b-4462-b145-2b55c23a63a0.preview.emergentagent.com/success",
+            "cancel_url": "https://e86128f5-e40b-4462-b145-2b55c23a63a0.preview.emergentagent.com/cancel"
         }
         
         logging.info(f"Test donation configuration created for ${donation.amount} - Mode: {process_mode}")
