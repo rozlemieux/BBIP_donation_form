@@ -133,16 +133,9 @@ const AuthPage = ({ onLogin }) => {
         ? { email: formData.email, password: formData.password }
         : { admin_email: formData.email, admin_password: formData.password, name: formData.name };
 
-      console.log('Making request to:', `${API}${endpoint}`);
-      console.log('Request data:', data);
-      console.log('API base URL:', API);
-
       const response = await axios.post(`${API}${endpoint}`, data);
-      console.log('Response:', response.data);
       onLogin(response.data.access_token);
     } catch (error) {
-      console.error('Request failed:', error);
-      console.error('Error response:', error.response);
       setError(error.response?.data?.detail || error.message || 'Authentication failed');
     } finally {
       setLoading(false);
