@@ -1207,7 +1207,7 @@ const Transactions = ({ organization, authToken }) => {
 
   const fetchTransactions = async () => {
     try {
-      const response = await axios.get(`${API}/organizations/${organization.id}/transactions`, {
+      const response = await axios.get(`${API}/api/organizations/${organization.id}/transactions`, {
         headers: { Authorization: `Bearer ${authToken}` }
       });
       setTransactions(response.data);
