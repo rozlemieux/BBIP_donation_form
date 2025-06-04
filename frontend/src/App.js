@@ -18,7 +18,7 @@ function App() {
 
   const fetchOrganization = async () => {
     try {
-      const response = await axios.get(`${API}/organizations/me`, {
+      const response = await axios.get(`${API}/api/organizations/me`, {
         headers: { Authorization: `Bearer ${authToken}` }
       });
       setOrganization(response.data);
