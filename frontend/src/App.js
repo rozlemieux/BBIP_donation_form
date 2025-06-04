@@ -355,7 +355,7 @@ const Dashboard = ({ organization, authToken, setCurrentPage }) => {
         <h3 className="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {quickActions.map((action, index) => (
-            <QuickActionCard key={index} {...action} />
+            <QuickActionCard key={index} {...action} setCurrentPage={setCurrentPage} />
           ))}
         </div>
       </div>
