@@ -2339,7 +2339,7 @@ async def serve_donation_embed(org_id: str):
                             console.log('Processing REAL transaction token:', transactionToken);
                             
                             // Process the REAL transaction token
-                            const response = await fetch(`${{API_BASE}}/process-transaction`, {{
+                            const response = await fetch(`${{API_BASE}}/api/process-transaction`, {{
                                 method: 'POST',
                                 headers: {{
                                     'Content-Type': 'application/json'
