@@ -210,7 +210,7 @@ const AuthPage = ({ onLogin }) => {
 };
 
 // Dashboard Component  
-const Dashboard = ({ organization, authToken }) => {
+const Dashboard = ({ organization, authToken, setCurrentPage }) => {
   const [stats, setStats] = useState({ totalDonations: 0, totalAmount: 0, recentCount: 0 });
 
   useEffect(() => {
