@@ -1526,18 +1526,40 @@ async def create_donation(donation: DonationRequest, authorization: str = Header
 
 @app.post("/api/test-donate")
 async def create_test_donation(donation: DonationRequest):
-    """Create a test donation with mock credentials for demonstration purposes"""
+    """Create a test donation that respects organization test mode settings"""
     try:
-        # Get test organization or create one
         org_id = donation.org_id or "test-org-id"
         
-        # Create test checkout configuration without requiring OAuth2
-        # Use a known test merchant account ID for demo purposes
-        test_merchant_id = "96563c2e-c97a-4db1-a0ed-1b2a8219f110"  # This should be a test merchant ID
+        # If we have a real organization ID, get their test mode setting
+        if org_id != "test-org-id":
+            org = await db["organizations"].find_one({"id": org_id})
+            if org:
+                org_test_mode = org.get("test_mode", True)
+                # Use organization's test merchant ID if available
+                if org_test_mode and org.get("bb_test_merchant_id"):
+                    merchant_id = org.get("bb_test_merchant_id")
+                elif not org_test_mode and org.get("bb_production_merchant_id"):
+                    merchant_id = org.get("bb_production_merchant_id")
+                else:
+                    # Fallback to demo test merchant ID
+                    merchant_id = "96563c2e-c97a-4db1-a0ed-1b2a8219f110"  # Demo test merchant ID
+                
+                process_mode = "Test" if org_test_mode else "Live"
+            else:
+                # Organization not found, use demo test settings
+                org_test_mode = True
+                merchant_id = "96563c2e-c97a-4db1-a0ed-1b2a8219f110"
+                process_mode = "Test"
+        else:
+            # Demo mode - always test
+            org_test_mode = True
+            merchant_id = "96563c2e-c97a-4db1-a0ed-1b2a8219f110"
+            process_mode = "Test"
         
+        # Create checkout configuration
         checkout_config = {
             "public_key": os.environ.get('BB_PUBLIC_KEY', '737471a1-1e7e-40ab-aa3a-97d0fb806e6f'),
-            "merchant_account_id": test_merchant_id,
+            "merchant_account_id": merchant_id,
             "amount": float(donation.amount),
             "currency": "USD",
             "donor_info": {
@@ -1546,13 +1568,13 @@ async def create_test_donation(donation: DonationRequest):
                 "phone": getattr(donation, 'donor_phone', ''),
                 "address": getattr(donation, 'donor_address', '')
             },
-            "test_mode": True,
-            "process_mode": "Test",  # Always test mode for demo purposes (Test, Live, or Demo)
+            "test_mode": org_test_mode,
+            "process_mode": process_mode,
             "return_url": "https://e86128f5-e40b-4462-b145-2b55c23a63a0.preview.emergentagent.com/success",
             "cancel_url": "https://e86128f5-e40b-4462-b145-2b55c23a63a0.preview.emergentagent.com/cancel"
         }
         
-        logging.info(f"Test donation configuration created for ${donation.amount}")
+        logging.info(f"Test donation configuration created for ${donation.amount} - Mode: {process_mode}")
         
         return {
             "success": True,
