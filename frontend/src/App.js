@@ -616,7 +616,7 @@ const BBMSConfig = ({ organization, authToken, onUpdate }) => {
 
     try {
       // Use environment variables for app credentials (set by developer)
-      const response = await axios.post(`${API}/organizations/bbms-oauth/start`, 
+      const response = await axios.post(`${API}/api/organizations/bbms-oauth/start`, 
         { 
           merchant_id: currentMerchantId,
           app_id: process.env.REACT_APP_BB_APPLICATION_ID || "2e2c42a7-a2f5-4fd3-a0bc-d4b3b36d8cea",
