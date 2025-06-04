@@ -68,7 +68,7 @@ function App() {
         <Navigation currentPage={currentPage} setCurrentPage={setCurrentPage} />
         
         <div className="mt-8">
-          {currentPage === 'dashboard' && <Dashboard organization={organization} authToken={authToken} />}
+          {currentPage === 'dashboard' && <Dashboard organization={organization} authToken={authToken} setCurrentPage={setCurrentPage} />}
           {currentPage === 'form-settings' && <FormSettings organization={organization} authToken={authToken} onUpdate={fetchOrganization} />}
           {currentPage === 'payment-setup' && <BBMSConfig organization={organization} authToken={authToken} onUpdate={fetchOrganization} />}
           {currentPage === 'mode-settings' && <ModeSettings organization={organization} authToken={authToken} onUpdate={fetchOrganization} />}
