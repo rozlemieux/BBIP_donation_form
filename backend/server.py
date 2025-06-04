@@ -834,7 +834,7 @@ async def start_bbms_oauth(
         
         # Generate OAuth URL using user's app credentials
         from urllib.parse import urlencode
-        redirect_uri = "https://gitflow.preview.emergentagent.com/api/blackbaud-callback"
+        redirect_uri = "https://giftflow.preview.emergentagent.com/api/blackbaud-callback"
         
         params = {
             "client_id": oauth_data.app_id,
