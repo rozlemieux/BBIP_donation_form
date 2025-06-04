@@ -556,12 +556,13 @@ const FormSettings = ({ organization, authToken, onUpdate }) => {
   );
 };
 
-// BBMS Configuration Component (Simplified)
+// BBMS Configuration Component (Enhanced)
 const BBMSConfig = ({ organization, authToken, onUpdate }) => {
   const [merchantIds, setMerchantIds] = useState({
     test_merchant_id: '',
     production_merchant_id: ''
   });
+  const [editingMerchantIds, setEditingMerchantIds] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
@@ -572,8 +573,12 @@ const BBMSConfig = ({ organization, authToken, onUpdate }) => {
         test_merchant_id: organization.bb_test_merchant_id || '',
         production_merchant_id: organization.bb_production_merchant_id || ''
       });
+      // If both merchant IDs are empty, show editing mode by default
+      setEditingMerchantIds(!organization.bb_test_merchant_id && !organization.bb_production_merchant_id);
     }
   }, [organization]);
+
+  const hasSavedMerchantIds = Boolean(merchantIds.test_merchant_id || merchantIds.production_merchant_id);
 
   const handleMerchantSetup = async (e) => {
     e.preventDefault();
@@ -585,6 +590,8 @@ const BBMSConfig = ({ organization, authToken, onUpdate }) => {
         headers: { Authorization: `Bearer ${authToken}` }
       });
       setSuccess(true);
+      setEditingMerchantIds(false);
+      onUpdate(); // Refresh organization data
       setTimeout(() => setSuccess(false), 3000);
     } catch (error) {
       setError(error.response?.data?.detail || 'Failed to save merchant IDs');
@@ -707,48 +714,93 @@ const BBMSConfig = ({ organization, authToken, onUpdate }) => {
           </ol>
         </div>
 
-        {/* Merchant ID Setup */}
-        <form onSubmit={handleMerchantSetup} className="space-y-4 mb-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Test Merchant Account ID
-            </label>
-            <input
-              type="text"
-              value={merchantIds.test_merchant_id}
-              onChange={(e) => setMerchantIds({...merchantIds, test_merchant_id: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Your test/sandbox merchant account ID"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Used for testing payments (sandbox environment)
-            </p>
-          </div>
+        {/* Merchant ID Display/Edit */}
+        {hasSavedMerchantIds && !editingMerchantIds ? (
+          <div className="space-y-4 mb-6">
+            <h4 className="font-medium text-gray-800">Saved Merchant Account IDs</h4>
+            
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Test Merchant Account ID
+                </label>
+                <div className="bg-white border border-gray-300 rounded-md px-3 py-2 text-gray-800">
+                  {merchantIds.test_merchant_id || 'Not configured'}
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Production Merchant Account ID
+                </label>
+                <div className="bg-white border border-gray-300 rounded-md px-3 py-2 text-gray-800">
+                  {merchantIds.production_merchant_id || 'Not configured'}
+                </div>
+              </div>
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Production Merchant Account ID
-            </label>
-            <input
-              type="text"
-              value={merchantIds.production_merchant_id}
-              onChange={(e) => setMerchantIds({...merchantIds, production_merchant_id: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Your live merchant account ID"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Used for live payments (production environment)
-            </p>
+            <button
+              onClick={() => setEditingMerchantIds(true)}
+              className="bg-gray-600 text-white font-medium py-2 px-4 rounded-md hover:bg-gray-700"
+            >
+              Change Merchant Account IDs
+            </button>
           </div>
+        ) : (
+          <form onSubmit={handleMerchantSetup} className="space-y-4 mb-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Test Merchant Account ID
+              </label>
+              <input
+                type="text"
+                value={merchantIds.test_merchant_id}
+                onChange={(e) => setMerchantIds({...merchantIds, test_merchant_id: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Your test/sandbox merchant account ID"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Used for testing payments (sandbox environment)
+              </p>
+            </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-gray-600 text-white font-medium py-2 px-4 rounded-md hover:bg-gray-700 disabled:bg-gray-400"
-          >
-            {loading ? 'Saving...' : 'Save Merchant Account IDs'}
-          </button>
-        </form>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Production Merchant Account ID
+              </label>
+              <input
+                type="text"
+                value={merchantIds.production_merchant_id}
+                onChange={(e) => setMerchantIds({...merchantIds, production_merchant_id: e.target.value})}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Your live merchant account ID"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Used for live payments (production environment)
+              </p>
+            </div>
+
+            <div className="flex space-x-3">
+              <button
+                type="submit"
+                disabled={loading}
+                className="bg-blue-600 text-white font-medium py-2 px-4 rounded-md hover:bg-blue-700 disabled:bg-gray-400"
+              >
+                {loading ? 'Saving...' : (hasSavedMerchantIds ? 'Update Merchant Account IDs' : 'Save Merchant Account IDs')}
+              </button>
+              
+              {hasSavedMerchantIds && (
+                <button
+                  type="button"
+                  onClick={() => setEditingMerchantIds(false)}
+                  className="bg-gray-200 text-gray-800 font-medium py-2 px-4 rounded-md hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
+          </form>
+        )}
 
         {/* OAuth Connection */}
         <div className="space-y-4">
