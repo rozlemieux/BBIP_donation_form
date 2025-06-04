@@ -1961,7 +1961,7 @@ async def serve_test_donation_embed(org_id: Optional[str] = None):
                         amount: selectedAmount,
                         donor_name: document.getElementById('donor-name').value.trim(),
                         donor_email: document.getElementById('donor-email').value.trim(),
-                        org_id: "test-org-id"
+                        org_id: ORG_ID  // Use the organization ID passed from URL
                     }};
                     
                     console.log('Starting test donation process with data:', donationData);
