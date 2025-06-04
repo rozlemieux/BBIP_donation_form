@@ -1532,9 +1532,12 @@ async def create_test_donation(donation: DonationRequest):
         org_id = donation.org_id or "test-org-id"
         
         # Create test checkout configuration without requiring OAuth2
+        # Use a known test merchant account ID for demo purposes
+        test_merchant_id = "96563c2e-c97a-4db1-a0ed-1b2a8219f110"  # This should be a test merchant ID
+        
         checkout_config = {
             "public_key": os.environ.get('BB_PUBLIC_KEY', '737471a1-1e7e-40ab-aa3a-97d0fb806e6f'),
-            "merchant_account_id": os.environ.get('BB_MERCHANT_ACCOUNT_ID', '96563c2e-c97a-4db1-a0ed-1b2a8219f110'),
+            "merchant_account_id": test_merchant_id,
             "amount": float(donation.amount),
             "currency": "USD",
             "donor_info": {
