@@ -2084,6 +2084,8 @@ async def serve_donation_embed(org_id: str):
         
         # Organization is properly configured, show the real form
         public_key = os.environ.get('BB_PUBLIC_KEY')
+        org_test_mode = org.get("test_mode", True)
+        
         return HTMLResponse(f"""
         <!DOCTYPE html>
         <html>
@@ -2103,6 +2105,7 @@ async def serve_donation_embed(org_id: str):
                 const ORG_ID = '{org_id}';
                 const API_BASE = 'https://e86128f5-e40b-4462-b145-2b55c23a63a0.preview.emergentagent.com/api';
                 const BB_PUBLIC_KEY = '{public_key}';
+                const ORG_TEST_MODE = {str(org_test_mode).lower()};  // Organization's test mode setting
                 
                 // Organization-specific donation form implementation
                 window.addEventListener('DOMContentLoaded', function() {{
