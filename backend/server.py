@@ -232,8 +232,6 @@ async def oauth_callback_page(code: str = None, state: str = None, error: str = 
     </html>
     """)
 
-api_router = APIRouter(prefix="/api")
-
 # Security
 security = HTTPBearer()
 JWT_SECRET = os.environ.get('JWT_SECRET', 'fallback_secret')
