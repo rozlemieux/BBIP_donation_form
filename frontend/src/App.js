@@ -1190,19 +1190,19 @@ const EmbedCode = ({ organization }) => {
               <h4 className="font-medium text-gray-800">Preview</h4>
               <div className="flex space-x-2">
                 <a
-                  href={`${BACKEND_URL}/api/embed/test-donate?org_id=${organization?.id}`}
+                  href={`${BACKEND_URL}/api/embed/donate/${organization?.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded-md hover:bg-blue-200 transition-colors"
                 >
-                  🧪 Demo Form (Follows Organization Mode)
+                  📱 Open in New Window
                 </a>
                 <span className={`text-sm px-3 py-1 rounded-md ${
                   organization?.test_mode 
                     ? 'bg-yellow-100 text-yellow-700' 
                     : 'bg-green-100 text-green-700'
                 }`}>
-                  Organization: {organization?.test_mode ? 'Test Mode' : 'Production Mode'}
+                  {organization?.test_mode ? 'Test Mode' : 'Production Mode'}
                 </span>
               </div>
             </div>
