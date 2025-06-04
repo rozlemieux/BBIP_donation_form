@@ -1388,8 +1388,9 @@ async def get_my_organization(org_id: str = Depends(verify_token)):
 
 @api_router.put("/organizations/{org_id}/form-settings")
 async def update_form_settings(
+    org_id: str,
     settings: FormSettings,
-    org_id: str = Depends(verify_token)
+    current_org: str = Depends(verify_token)
 ):
     """Update organization form settings"""
     await db.organizations.update_one(
